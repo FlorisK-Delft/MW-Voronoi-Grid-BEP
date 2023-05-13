@@ -1,7 +1,7 @@
 # The class Plane is used to make a plane and not make it such
 # that it can't be added by accident.
 import numpy as np
-
+from voronoi_mw import VoronoiMW
 
 class Plane:
     def __init__(self, x_axis: np.ndarray, y_axis: np.ndarray):  # pass in the form: [x min, x max], [y min, y max]
@@ -93,6 +93,26 @@ class Robots:
 
     def return_max_speed(self, index: int):
         return self.speed_robots[index]
+
+    def update_positions(self, position, index):
+        self.positions[index] = position
+
+    def time_step(self, p_dot, dt, index):
+         new_position = self.positions[index] + p_dot * dt
+         self.positions[index] = new_position
+
+    def time_step_all(self, voronois, dt):
+        p_dot_max = 0
+
+        for i in range(len(self.positions)):
+            p_dot = voronois[i].gradient_descent()
+            new_position = self.positions[i] + p_dot * dt
+            self.positions[i] = new_position
+            if np.linalg.norm(p_dot) > p_dot_max:
+                p_dot_max = np.linalg.norm(p_dot)
+
+        return p_dot_max
+
 
     # def sort_positions_xy(self): ! does not work, then the speeds should be sorted accordingly.
     #     # sort the positions first by x and then by y

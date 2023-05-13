@@ -22,6 +22,6 @@ class VoronoiMW:
         return x_center, y_center
 
     def gradient_descent(self):
-        return (-2/self.speed**2) * self.center_of_mass() * (self.robot - self.center_of_mass())
+        return (-2/self.speed**2) * self.total_mass() * (self.robot - self.center_of_mass())
 
 
