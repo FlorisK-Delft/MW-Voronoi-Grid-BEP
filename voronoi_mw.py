@@ -6,8 +6,12 @@ class VoronoiMW:
         self.robot = position_r
         self.speed = speed
         self.grid_coordinates = np.empty((0, 3))
+        self.index_x = []
+        self.index_y = []
 
-    def add_grid_point(self, point: np.ndarray, z: float):
+    def add_grid_point(self, point: np.ndarray, z: float, index_x, index_y):
+        self.index_x.append(index_x)
+        self.index_y.append(index_y)
         weighted_coordinate = np.array([float(point[0]), float(point[1]), float(z)])
         weighted_coordinate = weighted_coordinate.reshape(1, -1)
         self.grid_coordinates = np.append(self.grid_coordinates, weighted_coordinate, axis=0)

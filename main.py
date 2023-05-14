@@ -33,11 +33,11 @@ z = gaussian_2d(x, y, x_center, y_center, x_sigma, y_sigma)
 z /= z.sum()
 
 # choose random or static for testing:
-random = False
+random = True
 
 # example of some positions the robot could have, this could be randomised
 if random:
-    number_of_random_points = 100
+    number_of_random_points = 5
     x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_random_points)
     y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_random_points)
     positions = np.column_stack((x_random, y_random))
@@ -58,8 +58,8 @@ else:  # static
         [8, 1]
     ])
     speed_robots = np.array([
-        1.1,
-        3.1,
+        1,
+        3,
         1,
         3,
     ])
@@ -87,7 +87,7 @@ def assign_robot2voronoi():
                     fastest_robot = k
                     time = time_robot
 
-            voronois[fastest_robot].add_grid_point(grid_coordinate, float(z[i, j]))
+            voronois[fastest_robot].add_grid_point(grid_coordinate, float(z[i, j]), i, j)
 
 
 # for i in range(len(voronois)):
@@ -105,8 +105,12 @@ dt = 0.3
 iterations = 1000
 plt.figure()
 
+all_colors = list(colors.CSS4_COLORS.values())
+np.random.shuffle(all_colors)
+colors_robots = all_colors[:robots.number_of_robots()]
+
 for i in range(iterations):
-    plt.scatter(*zip(*robots.positions), c=['red', 'blue', 'black', 'orange'])
+    plt.scatter(*zip(*robots.positions), c=colors_robots)
     del voronois
     voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                 range(robots.number_of_robots())]
@@ -116,19 +120,40 @@ for i in range(iterations):
     prev_positions = robots.positions
     p_dot_max = robots.time_step_all(voronois, dt)
 
-    if p_dot_max < 0.15:
+    if p_dot_max < 0.2:
         print(f"\nThe max p dot ({p_dot_max}) if smaller than 0.01, iteration stopped. \nStopped at iteration: {i}")
         break
 
     #
     # if min(np.linalg.norm(prev_positions - robots.positions)) < 0.01:
     #     break
-        #break
+    # break
     # print(f"\nNew position after the {i+1} iteration:")
     # print(robots.positions)
 
-plt.scatter(*zip(*robots.positions), c=['red', 'blue', 'black', 'orange'])
+plt.scatter(*zip(*robots.positions), c=colors_robots)
 
 plt.imshow(z, origin='lower', extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), alpha=0.5)
 plt.colorbar()  # optionally add a colorbar to show the intensity scale
+# plt.show()
+
+total_grid = np.zeros_like(z)
+
+for i in range(len(voronois)):
+    array_i = np.copy(voronois[i].grid_coordinates)
+
+    for j in range(len(array_i)):
+        total_grid[voronois[i].index_x[j], voronois[i].index_y[j]] = i + 1
+
+grad = np.gradient(total_grid)
+grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
+
+border = grad[0] + grad[1]
+
+border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
+
+cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
+bounds = [0,0.5,1]
+norm = colors.BoundaryNorm(bounds, cmap.N)
+plt.imshow(border, cmap=cmap, norm=norm, extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), origin='lower')
 plt.show()
