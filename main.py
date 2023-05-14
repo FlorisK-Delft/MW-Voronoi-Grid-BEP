@@ -10,8 +10,8 @@ plane = Plane(
 )
 
 # Create the mesh grid
-resolution_x = ((plane.x_max - plane.x_min) * 10 + 1)
-resolution_y = ((plane.y_max - plane.y_min) * 10 + 1)
+resolution_x = ((plane.x_max - plane.x_min) * 20 + 1)
+resolution_y = ((plane.y_max - plane.y_min) * 20 + 1)
 x, y = np.meshgrid(
     np.linspace(*plane.return_x_limits(), resolution_x),
     np.linspace(*plane.return_y_limits(), resolution_y),
@@ -33,7 +33,7 @@ z = gaussian_2d(x, y, x_center, y_center, x_sigma, y_sigma)
 z /= z.sum()
 
 # choose random or static for testing:
-random = False
+random = True
 
 # example of some positions the robot could have, this could be randomised
 if random:
@@ -78,8 +78,8 @@ if all_black:
         colors_robots.append("black")
 
 
-# # creates (for now empty) voronois for every robot
-# voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
+# # creates (for now empty) voronois for every robot voronois = [VoronoiMW(robots.return_position(i),
+# robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
 
 
 def assign_robot2voronoi():
@@ -141,29 +141,19 @@ def plot_current(iteration):
 
     # plot the arrow of the gradient descent, with arrow_scale as variable
     for voronoi in voronois:
-        px, py = voronoi.gradient_descent()
+        px, py = arrow_scale * voronoi.gradient_descent()
         robot_x, robot_y = voronoi.position()
 
-        plt.quiver(robot_x, robot_y, px, py, angles='xy', scale_units='xy', scale=arrow_scale, color='r')
+        length = np.sqrt(px**2 + py**2)
 
-
-
-
-
-    # for voronoi in voronois:
-    #     p = voronoi.gradient_descent()
-    #     robot_pos = voronoi.robot
-    #     arrow_size = arrow_scale * np.linalg.norm(p)  # Calculate the size of the arrow based on the gradient magnitude
-    #
-    #     # Create a transformation to position the arrow at the robot's position
-    #     trans = transforms.Affine2D().translate(robot_pos[0], robot_pos[1]) + plt.gca().transData
-    #
-    #     # Create a patch representing the arrow
-    #     arrow_patch = patches.Arrow(0, 0, p[0], p[1], width=0.5*arrow_size, color='red')
-    #
-    #     # Add the arrow to the plot
-    #     plt.gca().add_patch(arrow_patch)
-    #     arrow_patch.set_transform(trans)
+        # plt.quiver(robot_x, robot_y, px, py, angles='xy', scale_units='xy', scale=3, color='r')
+        plt.arrow(
+            robot_x, robot_y, px, py,
+            color = 'red',
+            width = min(length/220, 0.05),
+            head_width = min(length/4, 0.2),
+            length_includes_head = True
+        )
 
     # plot the voronoi boundary's
     cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
@@ -183,12 +173,14 @@ def plot_current(iteration):
     # show the total plot
     plt.show()
 
-
+# ---------------------------------------------------------------------------------------------------------------------
+# These are the most important variables to set!
 dt = 0.4
 iterations = 1000
-stop_criterion = 0.21
+stop_criterion = 0.01
 p_dot_max = None
-arrow_scale = 100
+arrow_scale = 7
+# ---------------------------------------------------------------------------------------------------------------------
 
 for i in range(iterations):
     print(f"\nCalculating iteration {i} \nCurrent p_dot_max: {p_dot_max}, stopping if p_dot_max < {stop_criterion}")
@@ -221,5 +213,9 @@ for i in range(iterations):
     del voronois
 
 # create the gif:
-imageio.mimsave(f'{dir_files}/output.gif', images, duration=0.5)
+imageio.mimsave(f'{dir_files}/gif_speed1.gif', images, duration=0.9)
+imageio.mimsave(f'{dir_files}/gif_speed2.gif', images, duration=0.5)
+imageio.mimsave(f'{dir_files}/gif_speed3.gif', images, duration=0.3)
+imageio.mimsave(f'{dir_files}/gif_speed4.gif', images, duration=0.18)
+
 # imageio.mimwrite(f'{dir_files}/output2.mp4', images, fps=2)
