@@ -41,15 +41,7 @@ if random:
     x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_random_points)
     y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_random_points)
     positions = np.column_stack((x_random, y_random))
-    speed_robots = np.random.uniform(1, 2, number_of_random_points)
-    # speed_robots = np.array([
-    #     1,
-    #     1,
-    #     1,
-    #     3,
-    #     3,
-    #     2
-    # ])
+    speed_robots = np.random.randint(1, 4, number_of_random_points)
 else:  # static
     positions = np.array([
         [2.5, 1.5],
@@ -72,7 +64,14 @@ print(
     robots.robot_p_and_v_array()
 )
 
-voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
+# makes sure there are the same amount of random colours as there are robots
+all_colors = list(colors.CSS4_COLORS.values())
+np.random.shuffle(all_colors)
+colors_robots = all_colors[:robots.number_of_robots()]
+
+
+# # creates (for now empty) voronois for every robot
+# voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
 
 
 def assign_robot2voronoi():
@@ -90,70 +89,86 @@ def assign_robot2voronoi():
             voronois[fastest_robot].add_grid_point(grid_coordinate, float(z[i, j]), i, j)
 
 
-# for i in range(len(voronois)):
-#     print(f"\nCenter point of robot {i}:")
-#     print(voronois[i].center_of_mass())
-#     print(voronois[i].total_mass())
-#     print(voronois[i].gradient_descent())
+def get_border_voronoi():
+    # start with making a grid the exact same size as z, but filled with zeros
+    total_grid = np.zeros_like(z)
+
+    # iterate for every voronoi
+    for i, voronoi in enumerate(voronois):
+        array_i = np.copy(voronoi.grid_coordinates)
+
+        # for every index in vor make it equal to the number of which voronoi it is,
+        # so the first plane of voronoi 1 gets filled with only 1's, second one with only 2's, etc
+        for j in range(len(array_i)):
+            total_grid[voronoi.index_x[j], voronoi.index_y[j]] = i + 1
+
+    # Because every voronoi has a different number for the plane there excist a gradient between those planes,
+    # calculate what the gradient is and the if any gradient exist make it equal to 1, otherwise make 'almost' 0 = 0
+    grad = np.gradient(total_grid)
+    grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
+
+    # adds the gradient in y and in x direction together so a border forms when plotted
+    border = grad[0] + grad[1]
+
+    # makes sure all values are ether 0 or 1 so the border can be plotted with a homogenous colour
+    border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
+
+    print(border)
+    return border
 
 
-# for i in range(robots.number_of_robots):
-#     robots.time_step(voronois[i].gradient_descent(), dt, i)
+def plot_current(iteration):
+    plt.figure()
+    plt.scatter(*zip(*robots.positions), c=colors_robots)
 
-# robots.time_step_all(voronois, dt)
+    # plot the gradient of the pdf (this is z)
+    plt.imshow(z, origin='lower', extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), alpha=0.5)
+    plt.colorbar()
+
+    # plot the voronoi boundary's
+    cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
+    bounds = [0, 0.5, 1]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+    plt.imshow(get_border_voronoi(), cmap=cmap, norm=norm, extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max),
+               origin='lower')
+
+    # saves the iteration in the folder
+    plt.savefig(f'{this_test}/{f"{iteration + 1}"}.png')
+
+    # show the total plot
+    plt.show()
+
+
 dt = 0.3
 iterations = 1000
-plt.figure()
-
-all_colors = list(colors.CSS4_COLORS.values())
-np.random.shuffle(all_colors)
-colors_robots = all_colors[:robots.number_of_robots()]
+stop_criterion = 0.1
 
 for i in range(iterations):
-    plt.scatter(*zip(*robots.positions), c=colors_robots)
-    del voronois
+    print(f"\nCalculating iteration {i}")
+
+    # creates (for now empty) voronois for every robot
     voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                 range(robots.number_of_robots())]
 
     assign_robot2voronoi()
 
-    prev_positions = robots.positions
+    # this plot is with the current position and current location
+    plot_current(i)
+
+    # calculate the next positions, return the maximum robot displacement p_dot to look for stop criterion
     p_dot_max = robots.time_step_all(voronois, dt)
 
-    if p_dot_max < 0.2:
+    # stop criterion, if the vector for moving the robots gets small enough, stop moving the robots.
+    if p_dot_max < stop_criterion:
         print(f"\nThe max p dot ({p_dot_max}) if smaller than 0.01, iteration stopped. \nStopped at iteration: {i}")
+
+        # makes sure the final plot get shown
+        voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
+                    range(robots.number_of_robots())]
+
+        assign_robot2voronoi()
+        plot_current(i)
         break
 
-    #
-    # if min(np.linalg.norm(prev_positions - robots.positions)) < 0.01:
-    #     break
-    # break
-    # print(f"\nNew position after the {i+1} iteration:")
-    # print(robots.positions)
-
-plt.scatter(*zip(*robots.positions), c=colors_robots)
-
-plt.imshow(z, origin='lower', extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), alpha=0.5)
-plt.colorbar()  # optionally add a colorbar to show the intensity scale
-# plt.show()
-
-total_grid = np.zeros_like(z)
-
-for i in range(len(voronois)):
-    array_i = np.copy(voronois[i].grid_coordinates)
-
-    for j in range(len(array_i)):
-        total_grid[voronois[i].index_x[j], voronois[i].index_y[j]] = i + 1
-
-grad = np.gradient(total_grid)
-grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
-
-border = grad[0] + grad[1]
-
-border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
-
-cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
-bounds = [0,0.5,1]
-norm = colors.BoundaryNorm(bounds, cmap.N)
-plt.imshow(border, cmap=cmap, norm=norm, extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), origin='lower')
-plt.show()
+    # deletes the voronois so it can be used again next iteration
+    del voronois
