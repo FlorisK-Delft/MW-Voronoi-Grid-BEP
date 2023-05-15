@@ -19,8 +19,21 @@ x, y = np.meshgrid(
 
 
 def gaussian_2d(x, y, x0, y0, xsig, ysig):
-    return np.exp(-0.5 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
+    return np.exp(-10 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
 
+
+# def gaussian_2d(x, y, x0, y0, xsig, ysig):
+#     xsig_top = 0.5 * xsig
+#     ysig_top = 0.5 * ysig
+#     x0_bottom = x0
+#     y0_bottom = -y0
+#     xsig_bottom = 1.5 * xsig
+#     ysig_bottom = 1.5 * ysig
+#
+#     top_quadrant = np.exp(-8 * (((x - x0) / xsig_top) ** 2 + ((y - y0) / ysig_top) ** 2))
+#     bottom_quadrant = np.exp(-8 * (((x - x0_bottom) / xsig_bottom) ** 2 + ((y - y0_bottom) / ysig_bottom) ** 2))
+#
+#     return top_quadrant + bottom_quadrant
 
 x_center = (plane.x_max + plane.x_min) / 2
 y_center = (plane.y_max + plane.y_min) / 2
