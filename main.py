@@ -1,5 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+import matplotlib.colors as colors
+
+import matplotlib.patches as patches
+import matplotlib.transforms as transforms
+
+# to make the gif:
+import imageio
+
+images = []
+
+# # other way of making the gif
+# from PIL import Image
+
+import os
+import datetime
+
+# Get the current date and time
+now = datetime.datetime.now()
+
+# Format the date and time in the desired way
+formatted_date = now.strftime("%Y-%m-%d_%H-%M-%S")
+
+# Create the file name with the desired format
+dir_files = "run_" + formatted_date
+
+os.makedirs(dir_files, exist_ok=True)
 
 from classes import Plane, Robots
 from voronoi_mw import VoronoiMW
