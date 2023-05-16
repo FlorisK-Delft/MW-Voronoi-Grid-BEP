@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import math
 import matplotlib.colors as colors
 
+import csv
+import json
+
 import matplotlib.patches as patches
 import matplotlib.transforms as transforms
 
@@ -61,6 +64,7 @@ def gaussian_2d(x, y, x0, y0, xsig, ysig):
 #     bottom_quadrant = np.exp(-8 * (((x - x0_bottom) / xsig_bottom) ** 2 + ((y - y0_bottom) / ysig_bottom) ** 2))
 #
 #     return top_quadrant + bottom_quadrant
+
 
 x_center = (plane.x_max + plane.x_min) / 2
 y_center = (plane.y_max + plane.y_min) / 2
@@ -123,7 +127,7 @@ if all_black:
 # robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
 
 
-def assign_robot2voronoi(avg_response_time_i = 0):
+def assign_robot2voronoi(avg_response_time_i=0):
     for i in range(x.shape[0]):
         for j in range(x.shape[1]):
             grid_coordinate = np.array([x[i, j], y[i, j]])
@@ -169,7 +173,7 @@ def get_border_voronoi():
     return border
 
 
-def plot_current(iteration, last_iteration = False):
+def plot_current(iteration, last_iteration=False):
     plt.clf()  # clears the previous picture, so not all 15 appear at once
     plt.figure()
 
@@ -179,7 +183,8 @@ def plot_current(iteration, last_iteration = False):
     d_letter = 0.22
     for i in range(len(robots.robot_positions())):
         # plot the robot speed for every robot
-        plt.text(robots.return_position(i)[0] + d_letter, robots.return_position(i)[1] - d_letter, f"${int(robots.return_max_speed(i))}$",
+        plt.text(robots.return_position(i)[0] + d_letter, robots.return_position(i)[1] - d_letter,
+                 f"${int(robots.return_max_speed(i))}$",
                  fontsize=9)  # maybe in the text: v{i + 1} =
 
     # plot the gradient of the pdf (this is z)
@@ -195,15 +200,15 @@ def plot_current(iteration, last_iteration = False):
         px, py = arrow_scale * voronoi.gradient_descent()
         robot_x, robot_y = voronoi.position()
 
-        length = np.sqrt(px**2 + py**2)
+        length = np.sqrt(px ** 2 + py ** 2)
 
         # plt.quiver(robot_x, robot_y, px, py, angles='xy', scale_units='xy', scale=3, color='r')
         plt.arrow(
             robot_x, robot_y, px, py,
-            color = 'red',
-            width = min(length/220, 0.05),
-            head_width = min(length/4, 0.2),
-            length_includes_head = True
+            color='red',
+            width=min(length / 220, 0.05),
+            head_width=min(length / 4, 0.2),
+            length_includes_head=True
         )
 
     # plot the voronoi boundary's
@@ -243,6 +248,7 @@ arrow_scale = 7
 # ---------------------------------------------------------------------------------------------------------------------
 avg_response_time = []
 p_dot_list = []
+quickest_response_time = 999999
 
 for i in range(iterations):
     print(f"\nCalculating iteration {i} \nCurrent p_dot_max: {p_dot_max}, stopping if p_dot_max < {stop_criterion}")
@@ -262,18 +268,26 @@ for i in range(iterations):
     p_dot_list.append(p_dot_list_i)
     # stop criterion, if the vector for moving the robots gets small enough, stop moving the robots.
     if p_dot_max < stop_criterion:
-        print(f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, iteration stopped. \nStopped at iteration: {i}")
+        print(
+            f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, iteration stopped. \nStopped at iteration: {i}")
 
         # makes sure the final plot get shown
         voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                     range(robots.number_of_robots())]
 
         assign_robot2voronoi()
-        plot_current(i, last_iteration = True)
+        plot_current(i, last_iteration=True)
         break
 
     # deletes the voronois so it can be used again next iteration
     del voronois
+
+    if avg_response_time[i] < quickest_response_time:
+        quickest_response_time = avg_response_time[i]
+        print(f"Current average response time: {round(avg_response_time[i], 3)} (This time is the quickest)")
+    else:
+        print(f"Quickest response time: {round(quickest_response_time), 3},"
+              f"\nCurrent average: {round(avg_response_time[i], 3)} (Current time is NOT the quickest)")
 
 indices = list(range(len(avg_response_time)))
 
@@ -295,7 +309,7 @@ plt.clf()
 plt.figure()
 p_dot_robots = list(map(list, zip(*p_dot_list)))
 for i, p_dots in enumerate(p_dot_robots):
-    plt.plot(p_dots, label=f"Robot {i+1}")
+    plt.plot(p_dots, label=f"Robot {i + 1}")
 
 plt.axhline(y=stop_criterion, color='r', linestyle='-', label='Stop criterion')
 
@@ -320,3 +334,36 @@ imageio.mimsave(f'{dir_files}/gif_speed1.gif', images, duration=0.9)
 imageio.mimsave(f'{dir_files}/gif_speed2.gif', images, duration=0.5)
 imageio.mimsave(f'{dir_files}/gif_speed3.gif', images, duration=0.3)
 imageio.mimsave(f'{dir_files}/gif_speed4.gif', images, duration=0.18)
+
+# save avg_response_time and p_dot_list to csv
+with open(f'{dir_files}/avg_response_time.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(avg_response_time)
+
+with open(f'{dir_files}/p_dot_list.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(p_dot_list)
+
+# save start time, end time, quickest time and index of fastest time
+times_data = {
+    'start_time': avg_response_time[0],
+    'end_time': avg_response_time[-1],
+    'quickest_time': min(avg_response_time),
+    'index_fastest_time': avg_response_time.index(min(avg_response_time))
+}
+
+with open(f'{dir_files}/times.json', 'w') as file:
+    json.dump(times_data, file, indent=4)
+
+# save the location of the robots with their starting position
+robots_data = {
+    f"Robot {i + 1}": {
+        "x": robots.return_position(i)[0],
+        "y": robots.return_position(i)[1],
+        "v": robots.return_max_speed(i)
+    }
+    for i in range(robots.number_of_robots())
+}
+
+with open(f'{dir_files}/robots.json', 'w') as file:
+    json.dump(robots_data, file, indent=4)
