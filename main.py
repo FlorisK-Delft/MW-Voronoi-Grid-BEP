@@ -12,8 +12,6 @@ import matplotlib.transforms as transforms
 # to make the gif:
 import imageio
 
-images = []
-
 # # other way of making the gif
 # from PIL import Image
 
@@ -23,6 +21,7 @@ import datetime
 number_of_tests = 15
 
 for test in range(number_of_tests):
+    images = []
     # Get the current date and time
     now = datetime.datetime.now()
 
@@ -243,7 +242,7 @@ for test in range(number_of_tests):
         images.append(imageio.v3.imread(filename))
 
         # show the total plot
-        if (iteration % 15) == 0:
+        if (iteration % 30) == 0:
             plt.show()
         elif always_show:
             plt.show()
@@ -255,7 +254,7 @@ for test in range(number_of_tests):
     # These are the most important variables to set!
     dt = 0.4
     iterations = 1000
-    stop_criterion = 0.009
+    stop_criterion = 0.05
     p_dot_max = None
     arrow_scale = 7
     # ---------------------------------------------------------------------------------------------------------------------
