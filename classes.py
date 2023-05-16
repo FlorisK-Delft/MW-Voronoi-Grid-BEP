@@ -102,6 +102,7 @@ class Robots:
          self.positions[index] = new_position
 
     def time_step_all(self, voronois, dt):
+        p_dot_list_i = []
         p_dot_max = 0
 
         for i in range(len(self.positions)):
@@ -110,8 +111,9 @@ class Robots:
             self.positions[i] = new_position
             if np.linalg.norm(p_dot) > p_dot_max:
                 p_dot_max = np.linalg.norm(p_dot)
+            p_dot_list_i.append(np.linalg.norm(p_dot))
 
-        return p_dot_max
+        return p_dot_list_i, p_dot_max
 
 
     # def sort_positions_xy(self): ! does not work, then the speeds should be sorted accordingly.

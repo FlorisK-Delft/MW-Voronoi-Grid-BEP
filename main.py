@@ -74,6 +74,7 @@ z /= z.sum()
 
 # choose random or static for testing:
 random = True
+always_show = False
 
 # example of some positions the robot could have, this could be randomised
 if random:
@@ -122,7 +123,7 @@ if all_black:
 # robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
 
 
-def assign_robot2voronoi():
+def assign_robot2voronoi(avg_response_time_i = 0):
     for i in range(x.shape[0]):
         for j in range(x.shape[1]):
             grid_coordinate = np.array([x[i, j], y[i, j]])
@@ -133,8 +134,11 @@ def assign_robot2voronoi():
                 if time_robot < time:
                     fastest_robot = k
                     time = time_robot
+                    avg_response_time_i += time_robot * z[i, j]
 
             voronois[fastest_robot].add_grid_point(grid_coordinate, float(z[i, j]), i, j)
+
+    return avg_response_time_i
 
 
 def get_border_voronoi():
@@ -165,11 +169,18 @@ def get_border_voronoi():
     return border
 
 
-def plot_current(iteration):
+def plot_current(iteration, last_iteration = False):
+    plt.clf()  # clears the previous picture, so not all 15 appear at once
     plt.figure()
 
     # plot the robot positions
     plt.scatter(*zip(*robots.positions), c=colors_robots)
+
+    d_letter = 0.22
+    for i in range(len(robots.robot_positions())):
+        # plot the robot speed for every robot
+        plt.text(robots.return_position(i)[0] + d_letter, robots.return_position(i)[1] - d_letter, f"${int(robots.return_max_speed(i))}$",
+                 fontsize=9)  # maybe in the text: v{i + 1} =
 
     # plot the gradient of the pdf (this is z)
     plt.imshow(z, origin='lower', extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), alpha=0.5)
@@ -204,23 +215,34 @@ def plot_current(iteration):
 
     # saves the iteration in the folder, and append to images for the gif
     # save the plot as png
-    filename = f'{dir_files}/{f"{iteration + 1}"}.png'
+    filename = f'{dir_files}/{f"{iteration}"}.png'
+
+    # save the png with the title
+    plt.title(f'{iteration}')
     plt.savefig(filename, dpi=150)  # dpi is the resolution of each png
 
-    # read the png image file and append it to the list
+    # read the png image file and append it to the list, without title
     images.append(imageio.v3.imread(filename))
 
     # show the total plot
-    plt.show()
+    if (iteration % 15) == 0:
+        plt.show()
+    elif always_show:
+        plt.show()
+    elif last_iteration:
+        plt.show()
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # These are the most important variables to set!
 dt = 0.4
 iterations = 1000
-stop_criterion = 0.01
+stop_criterion = 0.005
 p_dot_max = None
 arrow_scale = 7
 # ---------------------------------------------------------------------------------------------------------------------
+avg_response_time = []
+p_dot_list = []
 
 for i in range(iterations):
     print(f"\nCalculating iteration {i} \nCurrent p_dot_max: {p_dot_max}, stopping if p_dot_max < {stop_criterion}")
@@ -229,33 +251,72 @@ for i in range(iterations):
     voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                 range(robots.number_of_robots())]
 
-    assign_robot2voronoi()
+    avg_response_time.append(assign_robot2voronoi())
 
     # this plot is with the current position and current location
     plot_current(i)
 
     # calculate the next positions, return the maximum robot displacement p_dot to look for stop criterion
-    p_dot_max = robots.time_step_all(voronois, dt)
+    p_dot_list_i, p_dot_max = robots.time_step_all(voronois, dt)
 
+    p_dot_list.append(p_dot_list_i)
     # stop criterion, if the vector for moving the robots gets small enough, stop moving the robots.
     if p_dot_max < stop_criterion:
-        print(f"\nThe max p dot ({p_dot_max}) if smaller than 0.01, iteration stopped. \nStopped at iteration: {i}")
+        print(f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, iteration stopped. \nStopped at iteration: {i}")
 
         # makes sure the final plot get shown
         voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                     range(robots.number_of_robots())]
 
         assign_robot2voronoi()
-        plot_current(i)
+        plot_current(i, last_iteration = True)
         break
 
     # deletes the voronois so it can be used again next iteration
     del voronois
+
+indices = list(range(len(avg_response_time)))
+
+plt.clf()
+plt.figure()
+plt.plot(indices, avg_response_time, marker='o')
+
+plt.title('Plot of average response time')
+plt.xlabel('Iteration')
+plt.ylabel('Time (seconds)')
+
+plt.grid(True)
+
+plt.savefig(f"{dir_files}/Avg_response_time.png", dpi=150)
+plt.show()
+
+# show the velocity vector of all the robots over time
+plt.clf()
+plt.figure()
+p_dot_robots = list(map(list, zip(*p_dot_list)))
+for i, p_dots in enumerate(p_dot_robots):
+    plt.plot(p_dots, label=f"Robot {i+1}")
+
+plt.axhline(y=stop_criterion, color='r', linestyle='-', label='Stop criterion')
+
+plt.title('Plot of velocity vector of all robots')
+plt.xlabel('Iteration')
+plt.ylabel('Pdot (m/s)')
+
+plt.legend()
+plt.savefig(f"{dir_files}/Velocity_robots.png", dpi=150)
+plt.show()
+
+# imageio.mimwrite(f'{dir_files}/output2.mp4', images, fps=2)
+index_min = np.argmin(np.array(avg_response_time))
+print(f"The average response time was the quickest at index: {index_min}. (The last index is: {len(avg_response_time)})"
+      f"\nThe time at this index was: {avg_response_time[index_min]}. The time at the last index was: {avg_response_time[-1]}"
+      f"\n"
+      f"\nThe average response time at the start was {avg_response_time[0]}."
+      )
 
 # create the gif:
 imageio.mimsave(f'{dir_files}/gif_speed1.gif', images, duration=0.9)
 imageio.mimsave(f'{dir_files}/gif_speed2.gif', images, duration=0.5)
 imageio.mimsave(f'{dir_files}/gif_speed3.gif', images, duration=0.3)
 imageio.mimsave(f'{dir_files}/gif_speed4.gif', images, duration=0.18)
-
-# imageio.mimwrite(f'{dir_files}/output2.mp4', images, fps=2)
