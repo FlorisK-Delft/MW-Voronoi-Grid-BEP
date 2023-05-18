@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import random
 
-import csv
-import json
-
 # to make the gif:
 import imageio
 
@@ -13,7 +10,7 @@ import os
 import datetime
 from classes import Plane, Robots
 from voronoi_mw import VoronoiMW
-from export_summary_PNG import create_combined_image
+from export_final import create_combined_image, save_data, save_gif, plot_avg_response_time, plot_p_dot_list
 
 
 # Create necessary directory
@@ -56,8 +53,10 @@ def initialize_gaussian(x_mesh, y_mesh, init_plane):
     return z_mesh
 
 
-def initialize_robots(init_plane, number_of_robots=5, init_speeds=[3, 3, 2, 2, 1],
+def initialize_robots(init_plane, number_of_robots=5, init_speeds=None,
                       all_black=False, random_pos_bool=True, random_speed_bool=False, print_robots=False):
+    if init_speeds is None:
+        init_speeds = [3, 3, 2, 2, 1]
     if random_pos_bool:
         x_random = np.random.uniform(init_plane.x_min, init_plane.x_max, number_of_robots)
         y_random = np.random.uniform(init_plane.y_min, init_plane.y_max, number_of_robots)
@@ -146,7 +145,7 @@ def get_border_voronoi(current_voronois, z_mesh):
         for j in range(len(array_i)):
             total_grid[voronoi.index_x[j], voronoi.index_y[j]] = voronoi_number + 1
 
-    # Because every voronoi has a different number for the plane there excist a gradient between those planes,
+    # Because every voronoi has a different number for the plane there exist a gradient between those planes,
     # calculate what the gradient is and the if any gradient exist make it equal to 1, otherwise make 'almost' 0 = 0
     grad = np.gradient(total_grid)
     grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
@@ -163,7 +162,8 @@ def get_border_voronoi(current_voronois, z_mesh):
 
 def plot_current(iteration, robots_class, z_mesh, current_voronois,
                  plane_class, colors_robots_list, images_list, dir_files_name,
-                 arrow_scale_var=1, always_show=False, last_iteration=False):
+                 arrow_scale_var=1, always_show=False, last_iteration=False,
+                 show_every_n_times=30):
     # def plot_current(iteration, last_iteration=False):
     plt.clf()  # clears the previous picture, so not all 15 appear at once
     plt.figure()
@@ -225,17 +225,20 @@ def plot_current(iteration, robots_class, z_mesh, current_voronois,
     images_list.append(imageio.v3.imread(filename))
 
     # show the total plot
-    if (iteration % 30) == 0:
+    if (iteration % show_every_n_times) == 0:
         plt.show()
     elif always_show:
         plt.show()
     elif last_iteration:
         plt.show()
+    else:
+        plt.close()
+        # plt.clf()
 
     return images_list
 
 
-for test in range(30):
+for test in range(3):
     # ---------------------------------------------------------------------------------------------------------------------
     dir_files = create_directory(test)
 
@@ -253,9 +256,9 @@ for test in range(30):
     # These are the most important variables to set!
     dt = 0.4
     iterations = 800
-    stop_criterion = 0.25
+    stop_criterion = 0.05
     p_dot_max = None
-    arrow_scale = 7
+    arrow_scale = 6
     # ---------------------------------------------------------------------------------------------------------------------
     avg_response_time = []
     p_dot_list = []
@@ -303,113 +306,44 @@ for test in range(30):
             # important, i+1 iteration!, robots have moved, this is thus actually the next iteration
             images = plot_current(i + 1, robots, z, voronois, plane, colors_robots, images, dir_files,
                                   arrow_scale_var=arrow_scale, last_iteration=True)
+
+            p_dot_list_temp = [np.linalg.norm(voronois[i].gradient_descent()) for i in range(len(voronois))]
+            # add the last velocity vectors for the plot, actually not using the time step:
+            p_dot_list.append(p_dot_list_temp)
+
             break
 
-        # deletes the voronois so it can be used again next iteration
+        # deletes the voronois, so it can be used again next iteration
         del voronois
 
-    indices = list(range(len(avg_response_time)))
+    plot_avg_response_time(avg_response_time, dir_files)
 
-    plt.clf()
-    plt.figure()
-    plt.plot(indices, avg_response_time, marker='o')
-
-    plt.title('Plot of average response time')
-    plt.xlabel('Iteration')
-    plt.ylabel('Cost = Time^2 (seconds^2)')
-
-    plt.grid(True)
-
-    plt.savefig(f"{dir_files}/Avg_response_time.png", dpi=150)
-    plt.show()
+    plot_avg_response_time(avg_response_time, dir_files, log=True)
 
     # show the velocity vector of all the robots over time
-    plt.clf()
-    plt.figure()
-    p_dot_robots = list(map(list, zip(*p_dot_list)))
-    for number, p_dots in enumerate(p_dot_robots):
-        plt.plot(p_dots, label=f"Robot {number + 1}")
+    plot_p_dot_list(p_dot_list, stop_criterion, dir_files)
 
-    plt.axhline(y=stop_criterion, color='r', linestyle='-', label='Stop criterion')
-
-    plt.title('Plot of velocity vector of all robots')
-    plt.xlabel('Iteration')
-    plt.ylabel('Pdot (m/s)')
-
-    plt.legend()
-    plt.savefig(f"{dir_files}/Velocity_robots.png", dpi=150)
-    plt.show()
-
-    # imageio.mimwrite(f'{dir_files}/output2.mp4', images, fps=2)
-    index_min = np.argmin(np.array(avg_response_time))
     print(
-        f"The average response time was the quickest at index: {index_min}. "
-        f"(The last index is: {len(avg_response_time) - 1})"
-        f"\nThe time at this index was: {avg_response_time[index_min]}. "
-        f"The time at the last index was: {avg_response_time[-1]}"
-        f"\n"
-        f"\nThe average response time at the start was {avg_response_time[0]}."
+        f"The average response time\u00B2 at the start was: {avg_response_time[0]}."
+        f"\nThe average response time\u00B2 at the end was:  {avg_response_time[-1]}"
+        f"\nThe algorithm reduced the response time\u00B2 by "
+        f"{round((avg_response_time[0] - avg_response_time[-1]) / (avg_response_time[0]), 3) * 100}%"
     )
 
     # create the gif:
-    imageio.mimsave(f'{dir_files}/gif_speed1.gif', images, duration=0.9)
-    imageio.mimsave(f'{dir_files}/gif_speed2.gif', images, duration=0.5)
-    imageio.mimsave(f'{dir_files}/gif_speed3.gif', images, duration=0.3)
-    imageio.mimsave(f'{dir_files}/gif_speed4.gif', images, duration=0.18)
+    save_gif(images, dir_files)
 
     # save avg_response_time and p_dot_list to csv
-    with open(f'{dir_files}/avg_response_time.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(avg_response_time)
-
-    with open(f'{dir_files}/p_dot_list.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(p_dot_list)
-
-    index_fastes_time = avg_response_time.index(min(avg_response_time))
-
-    # save start time, end time, quickest time and index of fastest time
-    times_data = {
-        'start_time': avg_response_time[0],
-        'end_time': avg_response_time[-1],
-        'quickest_time': min(avg_response_time),
-        'index_fastest_time': index_fastes_time
-    }
-
-    with open(f'{dir_files}/times.json', 'w') as file:
-        json.dump(times_data, file, indent=4)
-
-    # save the location of the robots with their starting position
-    robots_data = {
-        f"Robot {i + 1}": {
-            "x": robots.return_position(i)[0],
-            "y": robots.return_position(i)[1],
-            "v": robots.return_max_speed(i)
-        }
-        for i in range(robots.number_of_robots())
-    }
-
-    with open(f'{dir_files}/robots.json', 'w') as file:
-        json.dump(robots_data, file, indent=4)
+    save_data(robots, avg_response_time, p_dot_list, dir_files)
 
     # create an overview of the most important data. So a test can be analysed quickly
     create_combined_image(
         start_index_png=f'{dir_files}/{0}.png',
-        fastest_index_png=f'{dir_files}/{f"{index_fastes_time}"}.png',
         end_index_png=f'{dir_files}/{len(avg_response_time) - 1}.png',
         average_response_time_png=f"{dir_files}/Avg_response_time.png",
         velocity_robots_png=f"{dir_files}/Velocity_robots.png",
         start_time=avg_response_time[0],
-        fastest_time=min(avg_response_time),
         end_time=avg_response_time[-1],
         robot_info_list=robots.robot_p_and_v_array(),
         output_path=f"{dir_files}/data_overview_{datetime.datetime.now()}.png"
     )
-
-    # rename the plot with the best index, so it can be found quickly
-    os.rename(
-        f'{dir_files}/{f"{index_fastes_time}"}.png',
-        f'{dir_files}/{f"{index_fastes_time} - lowest average response time"}.png'
-    )
-
-    # make log plot!
