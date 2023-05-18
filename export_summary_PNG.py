@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 
+
 def create_combined_image(start_index_png, fastest_index_png, end_index_png, average_response_time_png,
                           velocity_robots_png, start_time, fastest_time, end_time, robot_info_list, output_path):
     # Define the size of each individual PNG image 960 × 720
@@ -38,13 +39,15 @@ def create_combined_image(start_index_png, fastest_index_png, end_index_png, ave
     draw.text((10, 10), f"Start Time: {start_time}", fill="black", font=font)
     draw.text((image_width + 10, 10), f"Fastest Time: {fastest_time}", fill="black", font=font)
     draw.text((2 * image_width + 10, 10), f"End Time: {end_time}", fill="black", font=font)
-    draw.text((2*image_width + 10, 1.55*image_height + 10), f"End time is the quickest time: {same_time}", fill="black", font=font)
+    draw.text((2 * image_width + 10, 1.55 * image_height + 10), f"End time is the quickest time: {same_time}",
+              fill="black", font=font)
 
     # Add robot information
     robot_info = "\n\n".join([str(
         "[" + ",    ".join([str(round(element, 3)) for element in info]) + "]"
     ) for info in robot_info_list])
-    draw.text((2 * image_width + 10, image_height + 10), "Robot Info [x, y, v ]:\n\n" + robot_info, fill="black", font=font)
+    draw.text((2 * image_width + 10, image_height + 10), "Robot Info [x, y, v ]: (at end)\n\n" + robot_info,
+              fill="black", font=font)
 
     # Save the final image
     result.save(output_path)

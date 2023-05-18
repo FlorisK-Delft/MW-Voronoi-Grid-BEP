@@ -1,27 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 import matplotlib.colors as colors
+import random
 
 import csv
 import json
 
-import matplotlib.patches as patches
-import matplotlib.transforms as transforms
-
 # to make the gif:
 import imageio
 
-# # other way of making the gif
-# from PIL import Image
-
 import os
 import datetime
+from classes import Plane, Robots
+from voronoi_mw import VoronoiMW
+from export_summary_PNG import create_combined_image
 
-number_of_tests = 15
 
-for test in range(number_of_tests):
-    images = []
+# Create necessary directory
+def create_directory(run_number=None):
     # Get the current date and time
     now = datetime.datetime.now()
 
@@ -29,232 +25,235 @@ for test in range(number_of_tests):
     formatted_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Create the file name with the desired format
-    dir_files = "run_" + formatted_date
+    if run_number is not None:
+        dir_files_name = f"run_{run_number}_{formatted_date}"
+    else:
+        dir_files_name = f"run_{formatted_date}"
 
-    os.makedirs(dir_files, exist_ok=True)
+    os.makedirs(dir_files_name, exist_ok=True)
+    return dir_files_name
 
-    from classes import Plane, Robots
-    from voronoi_mw import VoronoiMW
-    from export_summary_PNG import create_combined_image
 
-    plane = Plane(
-        [0, 10],
-        [0, 10]
+def initialize_plane():
+    init_plane = Plane([0, 10], [0, 10])
+    resolution_x = ((init_plane.x_max - init_plane.x_min) * 20 + 1)
+    resolution_y = ((init_plane.y_max - init_plane.y_min) * 20 + 1)
+    x_mesh, y_mesh = np.meshgrid(
+        np.linspace(*init_plane.return_x_limits(), resolution_x),
+        np.linspace(*init_plane.return_y_limits(), resolution_y),
     )
-
-    # Create the mesh grid
-    resolution_x = ((plane.x_max - plane.x_min) * 20 + 1)
-    resolution_y = ((plane.y_max - plane.y_min) * 20 + 1)
-    x, y = np.meshgrid(
-        np.linspace(*plane.return_x_limits(), resolution_x),
-        np.linspace(*plane.return_y_limits(), resolution_y),
-    )
+    return init_plane, x_mesh, y_mesh
 
 
-    # def gaussian_2d(x, y, x0, y0, xsig, ysig):
-    #     return np.exp(-10 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
+def initialize_gaussian(x_mesh, y_mesh, init_plane):
+    x_center = (init_plane.x_max + init_plane.x_min) / 2
+    y_center = (init_plane.y_max + init_plane.y_min) / 2
+    x_sigma = (init_plane.x_max - init_plane.x_min) / 2
+    y_sigma = (init_plane.y_max - init_plane.y_min) / 2
+
+    z_mesh = gaussian_2d(x_mesh, y_mesh, x_center, y_center, x_sigma, y_sigma)
+    z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
+    return z_mesh
 
 
-    def gaussian_2d(x, y, x0, y0, xsig, ysig):
-        xsig_top = 0.5 * xsig
-        ysig_top = 1.5 * ysig
-        x0 *= 0.5
-        y0 *= 1.5
-        x0_bottom = x0 * 1.5
-        y0_bottom = y0 * 0.5
-        xsig_bottom = 1.5 * xsig
-        ysig_bottom = 0.5 * ysig
-
-        top_quadrant = np.exp(-8 * (((x - x0) / xsig_top) ** 2 + ((y - y0) / ysig_top) ** 2))
-        bottom_quadrant = np.exp(-8 * (((x - x0_bottom) / xsig_bottom) ** 2 + ((y - y0_bottom) / ysig_bottom) ** 2))
-
-        return top_quadrant + bottom_quadrant
-
-
-    x_center = (plane.x_max + plane.x_min) / 2
-    y_center = (plane.y_max + plane.y_min) / 2
-    x_sigma = (plane.x_max - plane.x_min) / 2
-    y_sigma = (plane.y_max - plane.y_min) / 2
-
-    z = gaussian_2d(x, y, x_center, y_center, x_sigma, y_sigma)
-
-    # normalize z so the total is equal to 1
-    z /= z.sum()
-
-    # choose random or static for testing:
-    random = True
-    always_show = False
-
-    # example of some positions the robot could have, this could be randomised
-    if random:
-        number_of_random_points = 5
-        x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_random_points)
-        y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_random_points)
+def initialize_robots(init_plane, number_of_robots=5, init_speeds=[3, 3, 2, 2, 1],
+                      all_black=False, random_pos_bool=True, random_speed_bool=False, print_robots=False):
+    if random_pos_bool:
+        x_random = np.random.uniform(init_plane.x_min, init_plane.x_max, number_of_robots)
+        y_random = np.random.uniform(init_plane.y_min, init_plane.y_max, number_of_robots)
         positions = np.column_stack((x_random, y_random))
-        # speed_robots = np.random.randint(1, 4, number_of_random_points)
-        speed_robots = [
-            3,
-            3,
-            2,
-            2,
-            1
-        ]
+        if random_speed_bool:
+            speed_robots = [random.randint(1, 3) for _ in range(number_of_robots)]
+        else:
+            speed_robots = init_speeds[:number_of_robots]
     else:  # static
-        positions = np.array([
-            [2.5, 1.5],
-            [1, 8],
-            [8, 8],
-            [8, 1]
-        ])
-        speed_robots = np.array([
-            1,
-            3,
-            1,
-            3,
-        ])
+        positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
+        speed_robots = init_speeds[:number_of_robots]
+    init_robots = Robots(init_plane, positions, speed_robots)
 
-    robots = Robots(plane, positions, speed_robots)
-
-    print(
-        np.array(["x", "y", "v"]),
-        "\n",
-        robots.robot_p_and_v_array()
-    )
+    if print_robots:
+        print(
+            np.array(["x", "y", "v"]),
+            "\n",
+            init_robots.robot_p_and_v_array()
+        )
 
     # makes sure there are the same amount of random colours as there are robots
-    all_colors = list(colors.CSS4_COLORS.values())
-    np.random.shuffle(all_colors)
-    colors_robots = all_colors[:robots.number_of_robots()]
-
-    all_black = True
-
+    init_colors_robots = []
     if all_black:
-        del colors_robots
-        colors_robots = []
-        for i in range(robots.number_of_robots()):
-            colors_robots.append("black")
+        for robot in range(init_robots.number_of_robots()):
+            init_colors_robots.append("black")
+    else:
+        all_colors = list(colors.CSS4_COLORS.values())
+        np.random.shuffle(all_colors)
+        init_colors_robots = all_colors[:init_robots.number_of_robots()]
+
+    return init_robots, init_colors_robots
 
 
-    # # creates (for now empty) voronois for every robot voronois = [VoronoiMW(robots.return_position(i),
-    # robots.return_max_speed(i)) for i in range(robots.number_of_robots())]
+# def gaussian_2d(x, y, x0, y0, xsig, ysig):
+#     return np.exp(-10 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
 
 
-    def assign_robot2voronoi(avg_response_time_i=0):
-        for i in range(x.shape[0]):
-            for j in range(x.shape[1]):
-                grid_coordinate = np.array([x[i, j], y[i, j]])
-                time = 999999
-                fastest_robot = 0
-                for k in range(robots.number_of_robots()):
-                    time_robot = np.linalg.norm(robots.return_position(k) - grid_coordinate) / robots.return_max_speed(k)
-                    if time_robot < time:
-                        fastest_robot = k
-                        time = time_robot
-                        avg_response_time_i += time_robot * z[i, j]
+def gaussian_2d(x_mesh, y_mesh, x0, y0, xsig, ysig):
+    xsig_top = 0.5 * xsig
+    ysig_top = 1.5 * ysig
+    x0 *= 0.5
+    y0 *= 1.5
+    x0_bottom = x0 * 1.5
+    y0_bottom = y0 * 0.5
+    xsig_bottom = 1.5 * xsig
+    ysig_bottom = 0.5 * ysig
 
-                voronois[fastest_robot].add_grid_point(grid_coordinate, float(z[i, j]), i, j)
+    top_quadrant = np.exp(-8 * (((x_mesh - x0) / xsig_top) ** 2 + ((y_mesh - y0) / ysig_top) ** 2))
+    bottom_quadrant = (np.exp(-8 * (((x_mesh - x0_bottom) / xsig_bottom) ** 2
+                                    + ((y_mesh - y0_bottom) / ysig_bottom) ** 2)))
 
-        return avg_response_time_i
-
-
-    def get_border_voronoi():
-        # start with making a grid the exact same size as z, but filled with zeros
-        total_grid = np.zeros_like(z)
-
-        # iterate for every voronoi
-        for i, voronoi in enumerate(voronois):
-            array_i = np.copy(voronoi.grid_coordinates)
-
-            # for every index in vor make it equal to the number of which voronoi it is,
-            # so the first plane of voronoi 1 gets filled with only 1's, second one with only 2's, etc
-            for j in range(len(array_i)):
-                total_grid[voronoi.index_x[j], voronoi.index_y[j]] = i + 1
-
-        # Because every voronoi has a different number for the plane there excist a gradient between those planes,
-        # calculate what the gradient is and the if any gradient exist make it equal to 1, otherwise make 'almost' 0 = 0
-        grad = np.gradient(total_grid)
-        grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
-
-        # adds the gradient in y and in x direction together so a border forms when plotted
-        border = grad[0] + grad[1]
-
-        # makes sure all values are ether 0 or 1 so the border can be plotted with a homogenous colour
-        border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
-
-        # print(border)
-        return border
+    return top_quadrant + bottom_quadrant
 
 
-    def plot_current(iteration, last_iteration=False):
-        plt.clf()  # clears the previous picture, so not all 15 appear at once
-        plt.figure()
+def assign_robot2voronoi(x_mesh, y_mesh, z_mesh, robots_for_vor, init_voronois, avg_response_time_i=0):
+    for index_i in range(x_mesh.shape[0]):
+        for index_j in range(x_mesh.shape[1]):
+            grid_coordinate = np.array([x_mesh[index_i, index_j], y_mesh[index_i, index_j]])
+            time = 999999
+            fastest_robot = 0
+            for k in range(robots_for_vor.number_of_robots()):
+                time_robot = np.linalg.norm(robots_for_vor.return_position(k) -
+                                            grid_coordinate) / robots_for_vor.return_max_speed(k)
+                if time_robot < time:
+                    fastest_robot = k
+                    time = time_robot
 
-        # plot the robot positions
-        plt.scatter(*zip(*robots.positions), c=colors_robots)
+            avg_response_time_i += time ** 2 * z_mesh[index_i, index_j]
 
-        d_letter = 0.22
-        for i in range(len(robots.robot_positions())):
-            # plot the robot speed for every robot
-            plt.text(robots.return_position(i)[0] + d_letter, robots.return_position(i)[1] - d_letter,
-                     f"${int(robots.return_max_speed(i))}$",
-                     fontsize=9)  # maybe in the text: v{i + 1} =
+            init_voronois[fastest_robot].add_grid_point(grid_coordinate,
+                                                        float(z_mesh[index_i, index_j]), index_i, index_j)
 
-        # plot the gradient of the pdf (this is z)
-        plt.imshow(z, origin='lower', extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max), alpha=0.5)
-        plt.colorbar()
+    return avg_response_time_i
 
-        # plot the center point of mass
-        for voronoi in voronois:
-            plt.plot(*voronoi.center_of_mass(), 'x', c="blue")
 
-        # plot the arrow of the gradient descent, with arrow_scale as variable
-        for voronoi in voronois:
-            px, py = arrow_scale * voronoi.gradient_descent()
-            robot_x, robot_y = voronoi.position()
+def get_border_voronoi(current_voronois, z_mesh):
+    # start with making a grid the exact same size as z, but filled with zeros
+    total_grid = np.zeros_like(z_mesh)
 
-            length = np.sqrt(px ** 2 + py ** 2)
+    # iterate for every voronoi
+    for voronoi_number, voronoi in enumerate(current_voronois):
+        array_i = np.copy(voronoi.grid_coordinates)
 
-            # plt.quiver(robot_x, robot_y, px, py, angles='xy', scale_units='xy', scale=3, color='r')
-            plt.arrow(
-                robot_x, robot_y, px, py,
-                color='red',
-                width=min(length / 220, 0.05),
-                head_width=min(length / 4, 0.2),
-                length_includes_head=True
-            )
+        # for every index in vor make it equal to the number of which voronoi it is,
+        # so the first plane of voronoi 1 gets filled with only 1's, second one with only 2's, etc
+        for j in range(len(array_i)):
+            total_grid[voronoi.index_x[j], voronoi.index_y[j]] = voronoi_number + 1
 
-        # plot the voronoi boundary's
-        cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
-        bounds = [0, 0.5, 1]
-        norm = colors.BoundaryNorm(bounds, cmap.N)
-        plt.imshow(get_border_voronoi(), cmap=cmap, norm=norm, extent=(plane.x_min, plane.x_max, plane.y_min, plane.y_max),
-                   origin='lower')
+    # Because every voronoi has a different number for the plane there excist a gradient between those planes,
+    # calculate what the gradient is and the if any gradient exist make it equal to 1, otherwise make 'almost' 0 = 0
+    grad = np.gradient(total_grid)
+    grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
 
-        # saves the iteration in the folder, and append to images for the gif
-        # save the plot as png
-        filename = f'{dir_files}/{iteration}.png'
+    # adds the gradient in y and in x direction together so a border forms when plotted
+    border = grad[0] + grad[1]
 
-        # save the png with the title
-        plt.title(f'{iteration}')
-        plt.savefig(filename, dpi=150)  # dpi is the resolution of each png
+    # makes sure all values are ether 0 or 1 so the border can be plotted with a homogenous colour
+    border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
 
-        # read the png image file and append it to the list, without title
-        images.append(imageio.v3.imread(filename))
+    # print(border)
+    return border
 
-        # show the total plot
-        if (iteration % 30) == 0:
-            plt.show()
-        elif always_show:
-            plt.show()
-        elif last_iteration:
-            plt.show()
 
+def plot_current(iteration, robots_class, z_mesh, current_voronois,
+                 plane_class, colors_robots_list, images_list, dir_files_name,
+                 arrow_scale_var=1, always_show=False, last_iteration=False):
+    # def plot_current(iteration, last_iteration=False):
+    plt.clf()  # clears the previous picture, so not all 15 appear at once
+    plt.figure()
+
+    # plot the robot positions
+    plt.scatter(*zip(*robots_class.positions), c=colors_robots_list)
+
+    d_letter = 0.22
+    for index_pos in range(len(robots_class.robot_positions())):
+        # plot the robot speed for every robot
+        plt.text(robots_class.return_position(index_pos)[0] + d_letter,
+                 robots_class.return_position(index_pos)[1] - d_letter,
+                 f"${int(robots_class.return_max_speed(index_pos))}$",
+                 fontsize=9)  # maybe in the text: v{index_pos + 1} =
+
+    # plot the gradient of the pdf (this is z)
+    plt.imshow(z_mesh, origin='lower',
+               extent=(plane_class.x_min, plane_class.x_max, plane_class.y_min, plane_class.y_max),
+               alpha=0.5)
+    plt.colorbar()
+
+    # plot the center point of mass
+    for voronoi in current_voronois:
+        plt.plot(*voronoi.center_of_mass(), 'x', c="blue")
+
+    # plot the arrow of the gradient descent, with arrow_scale as variable
+    for voronoi in current_voronois:
+        px, py = arrow_scale_var * voronoi.gradient_descent()
+        robot_x, robot_y = voronoi.position()
+
+        length = np.sqrt(px ** 2 + py ** 2)
+
+        # plt.quiver(robot_x, robot_y, px, py, angles='xy', scale_units='xy', scale=3, color='r')
+        plt.arrow(
+            robot_x, robot_y, px, py,
+            color='red',
+            width=min(length / 220, 0.05),
+            head_width=min(length / 4, 0.2),
+            length_includes_head=True
+        )
+
+    # plot the voronoi boundary's
+    cmap = colors.ListedColormap([(0, 0, 0, 0), (0, 0, 0, 1)])
+    bounds = [0, 0.5, 1]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+    plt.imshow(get_border_voronoi(current_voronois, z_mesh), cmap=cmap, norm=norm,
+               extent=(plane_class.x_min, plane_class.x_max, plane_class.y_min, plane_class.y_max),
+               origin='lower')
+
+    # saves the iteration in the folder, and append to images for the gif
+    # save the plot as png
+    filename = f'{dir_files_name}/{iteration}.png'
+
+    # save the png with the title
+    plt.title(f'{iteration}')
+    plt.savefig(filename, dpi=150)  # dpi is the resolution of each png
+
+    # read the png image file and append it to the list, without title
+    images_list.append(imageio.v3.imread(filename))
+
+    # show the total plot
+    if (iteration % 30) == 0:
+        plt.show()
+    elif always_show:
+        plt.show()
+    elif last_iteration:
+        plt.show()
+
+    return images_list
+
+
+for test in range(30):
+    # ---------------------------------------------------------------------------------------------------------------------
+    dir_files = create_directory(test)
+
+    # Create the mesh grid
+    plane, x, y = initialize_plane()
+
+    z = initialize_gaussian(x, y, plane)
+
+    # choose random or static for testing:
+    images = []
+
+    robots, colors_robots = initialize_robots(plane, all_black=True)
 
     # ---------------------------------------------------------------------------------------------------------------------
     # These are the most important variables to set!
     dt = 0.4
-    iterations = 1000
-    stop_criterion = 0.05
+    iterations = 800
+    stop_criterion = 0.25
     p_dot_max = None
     arrow_scale = 7
     # ---------------------------------------------------------------------------------------------------------------------
@@ -269,10 +268,13 @@ for test in range(number_of_tests):
         voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                     range(robots.number_of_robots())]
 
-        avg_response_time.append(assign_robot2voronoi())
+        avg_response_time.append(assign_robot2voronoi(x, y, z, robots, voronois, avg_response_time_i=0))
 
         # this plot is with the current position and current location
-        plot_current(i)
+        # plot_current(i,,
+
+        images = plot_current(i, robots, z, voronois, plane, colors_robots, images, dir_files,
+                              arrow_scale_var=arrow_scale, last_iteration=False)
 
         # calculate the next positions, return the maximum robot displacement p_dot to look for stop criterion
         p_dot_list_i, p_dot_max = robots.time_step_all(voronois, dt)
@@ -289,19 +291,22 @@ for test in range(number_of_tests):
         # stop criterion, if the vector for moving the robots gets small enough, stop moving the robots.
         if p_dot_max < stop_criterion:
             print(
-                f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, iteration stopped. \nStopped at iteration: {i}")
+                f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, "
+                f"iteration stopped. \nStopped at iteration: {i}")
 
             # makes sure the final plot get shown
             voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                         range(robots.number_of_robots())]
 
-            assign_robot2voronoi()
-            plot_current(i, last_iteration=True)
+            avg_response_time.append(assign_robot2voronoi(x, y, z, robots, voronois, avg_response_time_i=0))
+
+            # important, i+1 iteration!, robots have moved, this is thus actually the next iteration
+            images = plot_current(i + 1, robots, z, voronois, plane, colors_robots, images, dir_files,
+                                  arrow_scale_var=arrow_scale, last_iteration=True)
             break
 
         # deletes the voronois so it can be used again next iteration
         del voronois
-
 
     indices = list(range(len(avg_response_time)))
 
@@ -311,7 +316,7 @@ for test in range(number_of_tests):
 
     plt.title('Plot of average response time')
     plt.xlabel('Iteration')
-    plt.ylabel('Time (seconds)')
+    plt.ylabel('Cost = Time^2 (seconds^2)')
 
     plt.grid(True)
 
@@ -322,8 +327,8 @@ for test in range(number_of_tests):
     plt.clf()
     plt.figure()
     p_dot_robots = list(map(list, zip(*p_dot_list)))
-    for i, p_dots in enumerate(p_dot_robots):
-        plt.plot(p_dots, label=f"Robot {i + 1}")
+    for number, p_dots in enumerate(p_dot_robots):
+        plt.plot(p_dots, label=f"Robot {number + 1}")
 
     plt.axhline(y=stop_criterion, color='r', linestyle='-', label='Stop criterion')
 
@@ -337,11 +342,14 @@ for test in range(number_of_tests):
 
     # imageio.mimwrite(f'{dir_files}/output2.mp4', images, fps=2)
     index_min = np.argmin(np.array(avg_response_time))
-    print(f"The average response time was the quickest at index: {index_min}. (The last index is: {len(avg_response_time) - 1})"
-          f"\nThe time at this index was: {avg_response_time[index_min]}. The time at the last index was: {avg_response_time[-1]}"
-          f"\n"
-          f"\nThe average response time at the start was {avg_response_time[0]}."
-          )
+    print(
+        f"The average response time was the quickest at index: {index_min}. "
+        f"(The last index is: {len(avg_response_time) - 1})"
+        f"\nThe time at this index was: {avg_response_time[index_min]}. "
+        f"The time at the last index was: {avg_response_time[-1]}"
+        f"\n"
+        f"\nThe average response time at the start was {avg_response_time[0]}."
+    )
 
     # create the gif:
     imageio.mimsave(f'{dir_files}/gif_speed1.gif', images, duration=0.9)
@@ -395,7 +403,7 @@ for test in range(number_of_tests):
         fastest_time=min(avg_response_time),
         end_time=avg_response_time[-1],
         robot_info_list=robots.robot_p_and_v_array(),
-        output_path=f"{dir_files}/data_overview.png"
+        output_path=f"{dir_files}/data_overview_{datetime.datetime.now()}.png"
     )
 
     # rename the plot with the best index, so it can be found quickly
@@ -403,3 +411,5 @@ for test in range(number_of_tests):
         f'{dir_files}/{f"{index_fastes_time}"}.png',
         f'{dir_files}/{f"{index_fastes_time} - lowest average response time"}.png'
     )
+
+    # make log plot!

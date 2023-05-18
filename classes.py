@@ -1,10 +1,10 @@
 # The class Plane is used to make a plane and not make it such
 # that it can't be added by accident.
 import numpy as np
-from voronoi_mw import VoronoiMW
+
 
 class Plane:
-    def __init__(self, x_axis: np.ndarray, y_axis: np.ndarray):  # pass in the form: [x min, x max], [y min, y max]
+    def __init__(self, x_axis, y_axis):  # pass in the form: [x min, x max], [y min, y max]
         # assert isinstance(
         #     x_axis, np.ndarray
         # ) and (
@@ -61,14 +61,15 @@ class Robots:
         # pass a 2x1 numpy array with x and y coordinate
         if position_within_operating_plane_speed_non_zero(position, self.operating_plane, speed):
             self.positions = np.append(self.positions, [position], axis=0)
-            self.speed_robots = np.append(self.speed_robots, speed_robots[i])
+            self.speed_robots = np.append(self.speed_robots, speed)
         else:
             print(f"Position ({position[0]}, {position[1]}) does not fit within the plane.")
 
     def add_multiple_robots(self, multiple_positions, multiple_speeds):
         # pass a list of 2x1 numpy arrays with x and y coordinates
         for i in range(len(multiple_positions)):
-            if position_within_operating_plane_speed_non_zero(multiple_positions[i], self.operating_plane, multiple_speeds[i]):
+            if position_within_operating_plane_speed_non_zero(multiple_positions[i], self.operating_plane,
+                                                              multiple_speeds[i]):
                 self.positions = np.append(self.positions, [multiple_positions[i]], axis=0)
                 self.speed_robots = np.append(self.speed_robots, multiple_speeds[i])
             else:
@@ -98,8 +99,8 @@ class Robots:
         self.positions[index] = position
 
     def time_step(self, p_dot, dt, index):
-         new_position = self.positions[index] + p_dot * dt
-         self.positions[index] = new_position
+        new_position = self.positions[index] + p_dot * dt
+        self.positions[index] = new_position
 
     def time_step_all(self, voronois, dt):
         p_dot_list_i = []
@@ -114,7 +115,6 @@ class Robots:
             p_dot_list_i.append(np.linalg.norm(p_dot))
 
         return p_dot_list_i, p_dot_max
-
 
     # def sort_positions_xy(self): ! does not work, then the speeds should be sorted accordingly.
     #     # sort the positions first by x and then by y
