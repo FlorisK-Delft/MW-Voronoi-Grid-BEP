@@ -1,0 +1,139 @@
+from PIL import Image, ImageDraw, ImageFont
+
+import csv
+import json
+import imageio
+import matplotlib.pyplot as plt
+
+
+def create_combined_image(start_index_png, end_index_png, average_response_time_png,
+                          velocity_robots_png, start_time, end_time, robot_info_list, output_path):
+    # Define the size of each individual PNG image 960 × 720
+    image_width = 960
+    image_height = 720
+
+    # Load the PNG images
+    start_index_image = Image.open(start_index_png)
+    end_index_image = Image.open(end_index_png)
+    average_response_time_image = Image.open(average_response_time_png)
+    velocity_robots_image = Image.open(velocity_robots_png)
+
+    # Create a new blank image to hold all the images
+    result_width = 3 * image_width  # Three images side by side
+    result_height = 2 * image_height  # Two images stacked vertically
+    result = Image.new("RGB", (result_width, result_height), "white")
+
+    # Paste the images onto the blank image
+    result.paste(start_index_image, (0, 0))
+    result.paste(end_index_image, (image_width, 0))
+    result.paste(end_index_image, (2 * image_width, 0))
+    result.paste(average_response_time_image, (0, image_height))
+    result.paste(velocity_robots_image, (image_width, image_height))
+
+    # Create a drawing context to add text information
+    draw = ImageDraw.Draw(result)
+    font = ImageFont.truetype("arial.ttf", 33)  # Specify the font and size
+
+    # Add text information to the image
+    draw.text((10, 10), f"Start Time: {start_time}", fill="black", font=font)
+    # draw.text((image_width + 10, 10), f"Fastest Time: {fastest_time}", fill="black", font=font)
+    draw.text((2 * image_width + 10, 10), f"End Time: {end_time}", fill="black", font=font)
+    # draw.text((2 * image_width + 10, 1.55 * image_height + 10), f"End time is the quickest time: {same_time}",
+    #           fill="black", font=font)
+
+    # Add robot information
+    robot_info = "\n\n".join([str(
+        "[" + ",    ".join([str(round(element, 3)) for element in info]) + "]"
+    ) for info in robot_info_list])
+    draw.text((2 * image_width + 10, image_height + 10), "Robot Info [x, y, v ]: (at end)\n\n" + robot_info,
+              fill="black", font=font)
+
+    # Save the final image
+    result.save(output_path)
+
+
+def save_data(robots, avg_response_time, p_dot_list, output_path):
+    # save avg_response_time and p_dot_list to csv
+    with open(f'{output_path}/avg_response_time.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(avg_response_time)
+
+    with open(f'{output_path}/p_dot_list.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(p_dot_list)
+
+    # save start time, end time, quickest time and index of fastest time
+    times_data = {
+        'start_time': avg_response_time[0],
+        'end_time': avg_response_time[-1],
+    }
+
+    with open(f'{output_path}/times.json', 'w') as file:
+        json.dump(times_data, file, indent=4)
+
+    # save the location of the robots with their starting position
+    robots_data = {
+        f"Robot {i + 1}": {
+            "x": robots.return_position(i)[0],
+            "y": robots.return_position(i)[1],
+            "v": robots.return_max_speed(i)
+        }
+        for i in range(robots.number_of_robots())
+    }
+
+    with open(f'{output_path}/robots.json', 'w') as file:
+        json.dump(robots_data, file, indent=4)
+
+
+def save_gif(images_list, output_path):
+    imageio.mimsave(f'{output_path}/gif_speed1.gif', images_list, duration=0.9)
+    imageio.mimsave(f'{output_path}/gif_speed2.gif', images_list, duration=0.5)
+    imageio.mimsave(f'{output_path}/gif_speed3.gif', images_list, duration=0.3)
+    imageio.mimsave(f'{output_path}/gif_speed4.gif', images_list, duration=0.18)
+
+
+def plot_avg_response_time(avg_response_time_list, output_path=None, log=False, show=True):
+    indices = list(range(len(avg_response_time_list)))
+
+    plt.figure()
+    plt.plot(indices, avg_response_time_list, marker='o')
+
+    plt.title('Plot of average response time')
+    plt.xlabel('Iteration')
+
+
+    plt.grid(True)
+
+    if log:
+        plt.yscale('log', base=1000)
+        plt.ylabel('Cost = Time\u00B2 (seconds\u00B2) log10')  # , labelpad=15
+    else:
+        plt.ylabel('Cost = Time\u00B2 (seconds\u00B2)')
+
+    if (output_path is not None) and (log==False):
+        plt.savefig(f"{output_path}/Avg_response_time.png", dpi=150)
+    elif (output_path is not None) and (log==True):
+        plt.savefig(f"{output_path}/Avg_response_time_log.png", dpi=150)
+
+    if show:
+        plt.show()
+
+
+def plot_p_dot_list(p_dot_list, stop_criterion_val, output_path=None, show=True):
+    plt.figure()
+    p_dot_robots = list(map(list, zip(*p_dot_list)))
+    for number, p_dots in enumerate(p_dot_robots):
+        plt.plot(p_dots, label=f"Robot {number + 1}")
+
+    plt.axhline(y=stop_criterion_val, color='r', linestyle='-', label='Stop criterion')
+
+    plt.title('Plot of velocity vector of all robots')
+    plt.xlabel('Iteration')
+    plt.ylabel('Pdot (m/s)')
+
+    plt.legend()
+    if output_path is not None:
+        plt.savefig(f"{output_path}/Velocity_robots.png", dpi=150)
+
+    if show:
+        plt.show()
