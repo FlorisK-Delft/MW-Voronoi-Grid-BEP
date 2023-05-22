@@ -15,15 +15,24 @@ def print_grid(ax, grid_mesh, title):
     # Loop over data dimensions and create text annotations.
     for i in range(len(grid_mesh)):
         for j in range(len(grid_mesh[i])):
+
+            # make the correct color of the grid
+            if np.max(grid_mesh) == 1 and grid_mesh[i, j] == 1:
+                color_letter = 'w'
+            elif np.max(grid_mesh) == 1 and grid_mesh[i, j] == 0:
+                color_letter = 'r'
+            elif np.max(grid_mesh) != 1 and grid_mesh[i, j] == 1:
+                color_letter = 'r'
+            elif np.max(grid_mesh) != 1 and grid_mesh[i, j] != 1:
+                color_letter = 'w'
+
             text = ax.text(j + 0.5, len(grid_mesh) - i - 0.5, grid_mesh[i, j],
-                           ha="center", va="center", color="r", fontsize=16,
+                           ha="center", va="center", color=color_letter, fontsize=16,
                            fontproperties=font_prop_bold)  # use the bold font for the numbers
 
     ax.set_xticks([])  # Remove x-axis values
     ax.set_yticks([])  # Remove y-axis values
     ax.set_title(title, fontproperties=font_prop_regular, fontsize = 25)  # use the regular font for the title
-
-
 
 # Creating the array
 grid = np.array([

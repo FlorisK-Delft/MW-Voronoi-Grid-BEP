@@ -9,12 +9,12 @@ import imageio
 import os
 import datetime
 from classes import Plane, Robots
-from voronoi_mw import VoronoiMW
-from export_final import create_combined_image, save_data, save_gif, plot_avg_response_time, plot_p_dot_list
+from voronoi_mw import VoronoiMW, assign_robot2voronoi, get_border_voronoi, response_time_mw_voronoi
+from export_final import create_combined_image, save_data, save_gif, plot_avg_response_time, plot_p_dot_list, compare_loyds_to_mw
 
 
 # Create necessary directory
-def create_directory(run_number=None):
+def create_directory(run_number=None, loyds=False):
     # Get the current date and time
     now = datetime.datetime.now()
 
@@ -22,9 +22,13 @@ def create_directory(run_number=None):
     formatted_date = now.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Create the file name with the desired format
-    if run_number is not None:
+    if run_number is not None and (loyds is True):
+        dir_files_name = f"run_{run_number}_{formatted_date}_loyds"
+    elif run_number is not None and loyds is False:
         dir_files_name = f"run_{run_number}_{formatted_date}"
-    else:
+    elif run_number is None and loyds is True:
+        dir_files_name = f"run_{formatted_date}_loyds"
+    elif run_number is None and loyds is False:
         dir_files_name = f"run_{formatted_date}"
 
     os.makedirs(dir_files_name, exist_ok=True)
@@ -53,22 +57,25 @@ def initialize_gaussian(x_mesh, y_mesh, init_plane):
     return z_mesh
 
 
-def initialize_robots(init_plane, number_of_robots=5, init_speeds=None,
-                      all_black=False, random_pos_bool=True, random_speed_bool=False, print_robots=False):
+def initialize_robots(init_plane, number_of_robots=None, init_speeds=None, start_positions=None,
+                      all_black=False, print_robots=False, min_speed=1, max_speed=3):
+    if number_of_robots is None:
+        number_of_robots = len(start_positions)
+        if number_of_robots == 0:
+            number_of_robots = 5
     if init_speeds is None:
-        init_speeds = [3, 3, 2, 2, 1]
-    if random_pos_bool:
+        speed_robots = [random.randint(min_speed, max_speed) for _ in range(number_of_robots)]
+    else:
+        speed_robots = init_speeds
+
+    if start_positions is None:
         x_random = np.random.uniform(init_plane.x_min, init_plane.x_max, number_of_robots)
         y_random = np.random.uniform(init_plane.y_min, init_plane.y_max, number_of_robots)
-        positions = np.column_stack((x_random, y_random))
-        if random_speed_bool:
-            speed_robots = [random.randint(1, 3) for _ in range(number_of_robots)]
-        else:
-            speed_robots = init_speeds[:number_of_robots]
-    else:  # static
-        positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
-        speed_robots = init_speeds[:number_of_robots]
-    init_robots = Robots(init_plane, positions, speed_robots)
+        positions_r = np.column_stack((x_random, y_random))
+    else:
+        positions_r = start_positions
+
+    init_robots = Robots(init_plane, positions_r, speed_robots)
 
     if print_robots:
         print(
@@ -109,55 +116,6 @@ def gaussian_2d(x_mesh, y_mesh, x0, y0, xsig, ysig):
                                     + ((y_mesh - y0_bottom) / ysig_bottom) ** 2)))
 
     return top_quadrant + bottom_quadrant
-
-
-def assign_robot2voronoi(x_mesh, y_mesh, z_mesh, robots_for_vor, init_voronois, avg_response_time_i=0):
-    for index_i in range(x_mesh.shape[0]):
-        for index_j in range(x_mesh.shape[1]):
-            grid_coordinate = np.array([x_mesh[index_i, index_j], y_mesh[index_i, index_j]])
-            time = 999999
-            fastest_robot = 0
-            for k in range(robots_for_vor.number_of_robots()):
-                time_robot = np.linalg.norm(robots_for_vor.return_position(k) -
-                                            grid_coordinate) / robots_for_vor.return_max_speed(k)
-                if time_robot < time:
-                    fastest_robot = k
-                    time = time_robot
-
-            avg_response_time_i += time ** 2 * z_mesh[index_i, index_j]
-
-            init_voronois[fastest_robot].add_grid_point(grid_coordinate,
-                                                        float(z_mesh[index_i, index_j]), index_i, index_j)
-
-    return avg_response_time_i
-
-
-def get_border_voronoi(current_voronois, z_mesh):
-    # start with making a grid the exact same size as z, but filled with zeros
-    total_grid = np.zeros_like(z_mesh)
-
-    # iterate for every voronoi
-    for voronoi_number, voronoi in enumerate(current_voronois):
-        array_i = np.copy(voronoi.grid_coordinates)
-
-        # for every index in vor make it equal to the number of which voronoi it is,
-        # so the first plane of voronoi 1 gets filled with only 1's, second one with only 2's, etc
-        for j in range(len(array_i)):
-            total_grid[voronoi.index_x[j], voronoi.index_y[j]] = voronoi_number + 1
-
-    # Because every voronoi has a different number for the plane there exist a gradient between those planes,
-    # calculate what the gradient is and the if any gradient exist make it equal to 1, otherwise make 'almost' 0 = 0
-    grad = np.gradient(total_grid)
-    grad = np.where(np.isclose(grad, 0, atol=1e-8), 0, 1)
-
-    # adds the gradient in y and in x direction together so a border forms when plotted
-    border = grad[0] + grad[1]
-
-    # makes sure all values are ether 0 or 1 so the border can be plotted with a homogenous colour
-    border = np.where(np.isclose(border, 0, atol=1e-8), 0, 1)
-
-    # print(border)
-    return border
 
 
 def plot_current(iteration, robots_class, z_mesh, current_voronois,
@@ -238,74 +196,87 @@ def plot_current(iteration, robots_class, z_mesh, current_voronois,
     return images_list
 
 
-for test in range(3):
+def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, positions_sim=None,
+                        speed_sim=None, dt_sim=0.1, arrow_scale_sim=1, loyds_sim=False):
     # ---------------------------------------------------------------------------------------------------------------------
-    dir_files = create_directory(test)
-
-    # Create the mesh grid
-    plane, x, y = initialize_plane()
+    dir_files = create_directory(test, loyds=loyds_sim)
 
     z = initialize_gaussian(x, y, plane)
 
     # choose random or static for testing:
     images = []
 
-    robots, colors_robots = initialize_robots(plane, all_black=True)
+    robots, colors_robots = initialize_robots(plane, start_positions=positions_sim, init_speeds=speed_sim,
+                                              all_black=True)
 
-    # ---------------------------------------------------------------------------------------------------------------------
-    # These are the most important variables to set!
-    dt = 0.4
-    iterations = 800
-    stop_criterion = 0.05
-    p_dot_max = None
-    arrow_scale = 6
-    # ---------------------------------------------------------------------------------------------------------------------
+    if loyds_sim:
+        gain = 1
+    else:
+        gain = 4
+
     avg_response_time = []
     p_dot_list = []
-    quickest_response_time = 999999
+    p_dot_max = None
 
-    for i in range(iterations):
-        print(f"\nCalculating iteration {i} \nCurrent p_dot_max: {p_dot_max}, stopping if p_dot_max < {stop_criterion}")
+    if loyds_sim:
+        avg_response_time_as_mw = []
+        avg_response_time_speed_eq = []
+
+    for i in range(max_iterations):
+        print(
+            f"\nCalculating iteration {i} \nCurrent p_dot_max: {p_dot_max}, stopping if p_dot_max < {stop_criterion_simulation}")
 
         # creates (for now empty) voronois for every robot
         voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                     range(robots.number_of_robots())]
 
-        avg_response_time.append(assign_robot2voronoi(x, y, z, robots, voronois, avg_response_time_i=0))
+        avg_time, avg_time_speed_eq = assign_robot2voronoi(x, y, z, robots, voronois,
+                                                      loyds=loyds_sim)
+
+        avg_response_time.append(avg_time)
+
+        if loyds_sim:
+            avg_response_time_as_mw.append(response_time_mw_voronoi(x, y, z, robots))
+            avg_response_time_speed_eq.append(avg_time_speed_eq)
 
         # this plot is with the current position and current location
         # plot_current(i,,
 
         images = plot_current(i, robots, z, voronois, plane, colors_robots, images, dir_files,
-                              arrow_scale_var=arrow_scale, last_iteration=False)
+                              arrow_scale_var=arrow_scale_sim, last_iteration=False)
 
         # calculate the next positions, return the maximum robot displacement p_dot to look for stop criterion
-        p_dot_list_i, p_dot_max = robots.time_step_all(voronois, dt)
+        p_dot_list_i, p_dot_max = robots.time_step_all(voronois, dt_sim, gain_p=gain, loyds_=loyds_sim)
 
         p_dot_list.append(p_dot_list_i)
 
-        if avg_response_time[i] < quickest_response_time:
-            quickest_response_time = avg_response_time[i]
-            print(f"Current average response time: {round(avg_response_time[i], 4)} (This time is the quickest)")
-        else:
-            print(f"Quickest response time: {round(quickest_response_time, 4)},"
-                  f"\nCurrent response time: {round(avg_response_time[i], 4)} (Current time is NOT the quickest)")
+        print(f"Current average response time: {round(avg_response_time[i], 4)}")
+        if loyds_sim:
+            print(f"Current average response time, as if MW vor: {round(avg_response_time_as_mw[i], 4)}"
+                  f"\nCurrent average response time, as if equal speed: {round(avg_response_time_speed_eq[i], 4)}")
 
         # stop criterion, if the vector for moving the robots gets small enough, stop moving the robots.
-        if p_dot_max < stop_criterion:
+        if p_dot_max < stop_criterion_simulation:
             print(
-                f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion}, "
+                f"\nThe max p dot ({p_dot_max}) if smaller than {stop_criterion_simulation}, "
                 f"iteration stopped. \nStopped at iteration: {i}")
 
             # makes sure the final plot get shown
             voronois = [VoronoiMW(robots.return_position(i), robots.return_max_speed(i)) for i in
                         range(robots.number_of_robots())]
 
-            avg_response_time.append(assign_robot2voronoi(x, y, z, robots, voronois, avg_response_time_i=0))
+            avg_time, avg_time_speed_eq = assign_robot2voronoi(x, y, z, robots, voronois,
+                                                               loyds=loyds_sim)
+
+            avg_response_time.append(avg_time)
+
+            if loyds_sim:
+                avg_response_time_as_mw.append(response_time_mw_voronoi(x, y, z, robots))
+                avg_response_time_speed_eq.append(avg_time_speed_eq)
 
             # important, i+1 iteration!, robots have moved, this is thus actually the next iteration
             images = plot_current(i + 1, robots, z, voronois, plane, colors_robots, images, dir_files,
-                                  arrow_scale_var=arrow_scale, last_iteration=True)
+                                  arrow_scale_var=arrow_scale_sim, last_iteration=True)
 
             p_dot_list_temp = [np.linalg.norm(voronois[i].gradient_descent()) for i in range(len(voronois))]
             # add the last velocity vectors for the plot, actually not using the time step:
@@ -318,7 +289,11 @@ for test in range(3):
 
     plot_avg_response_time(avg_response_time, dir_files)
 
-    plot_avg_response_time(avg_response_time, dir_files, log=True)
+    if loyds_sim:
+        plot_avg_response_time(avg_response_time_as_mw, dir_files, title="Plot of average response time as if MW")
+        plot_avg_response_time(avg_response_time_speed_eq, dir_files, title="Plot of average response time speeds eq")
+
+    #plot_avg_response_time(avg_response_time, dir_files, log=True)
 
     # show the velocity vector of all the robots over time
     plot_p_dot_list(p_dot_list, stop_criterion, dir_files)
@@ -327,8 +302,17 @@ for test in range(3):
         f"The average response time\u00B2 at the start was: {avg_response_time[0]}."
         f"\nThe average response time\u00B2 at the end was:  {avg_response_time[-1]}"
         f"\nThe algorithm reduced the response time\u00B2 by "
-        f"{round((avg_response_time[0] - avg_response_time[-1]) / (avg_response_time[0]), 3) * 100}%"
+        f"{round((avg_response_time[0] - avg_response_time[-1]) / (avg_response_time[0]) * 100, 2)}%"
     )
+
+    if loyds_sim:
+        print(
+            f"\nLoyds:"
+            f"\nThe avg_response time\u00B2 at the start, calculated as if loyds,"
+            f" was: {avg_response_time_as_mw[0]}"
+            f"\nThe avg_response time\u00B2 on the end, calculated as if loyds,"
+            f" was: {avg_response_time_as_mw[-1]}"
+        )
 
     # create the gif:
     save_gif(images, dir_files)
@@ -347,3 +331,41 @@ for test in range(3):
         robot_info_list=robots.robot_p_and_v_array(),
         output_path=f"{dir_files}/data_overview_{datetime.datetime.now()}.png"
     )
+
+    if loyds_sim:
+        return avg_response_time, avg_response_time_as_mw, avg_response_time_speed_eq
+    else:
+        return avg_response_time, 0, 0
+
+
+for test in range(5):
+    # Create the mesh grid
+    plane, x, y = initialize_plane()
+
+    # ---------------------------------------------------------------------------------------------------------------------
+    # These are the most important variables to set!
+    dt = 0.4  # the time step
+    iterations = 800  # the maximum number of iterations
+    stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    arrow_scale = 6  # to decide how the arrows should be shown
+    positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
+    number_of_robots = 5
+
+    x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
+    y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_robots)
+    positions_robots_start = np.column_stack((x_random, y_random))
+
+    # positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
+    # ---------------------------------------------------------------------------------------------------------------------
+    response_time, _, _ = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
+                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=False)
+    loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
+                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=True)
+
+    compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
+
+    print(f"\nMW Vor Time\u00B2: {response_time[-1]}"
+          f"\nLoyds vor Time\u00B2: {loyds_response_time[-1]}"
+          f"\nLoyds mw vor Time\u00B2: {loyds_mw_voronoi_time[-1]}"
+          f"\nLoyds equal speed Time\u00B2: {loyds_time_speed_eq[-1]}"
+          )

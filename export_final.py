@@ -92,15 +92,14 @@ def save_gif(images_list, output_path):
     imageio.mimsave(f'{output_path}/gif_speed4.gif', images_list, duration=0.18)
 
 
-def plot_avg_response_time(avg_response_time_list, output_path=None, log=False, show=True):
+def plot_avg_response_time(avg_response_time_list, output_path=None, log=False, show=True, title='Plot of average response time'):
     indices = list(range(len(avg_response_time_list)))
 
     plt.figure()
     plt.plot(indices, avg_response_time_list, marker='o')
 
-    plt.title('Plot of average response time')
+    plt.title(title)
     plt.xlabel('Iteration')
-
 
     plt.grid(True)
 
@@ -110,10 +109,16 @@ def plot_avg_response_time(avg_response_time_list, output_path=None, log=False, 
     else:
         plt.ylabel('Cost = Time\u00B2 (seconds\u00B2)')
 
+    # want to change this later, just temporary
+    if title == 'Plot of average response time':
+        string = "Avg_response_time"
+    else:
+        string = title.replace(" ", "_")
+
     if (output_path is not None) and (log==False):
-        plt.savefig(f"{output_path}/Avg_response_time.png", dpi=150)
+        plt.savefig(f"{output_path}/{string}.png", dpi=150)
     elif (output_path is not None) and (log==True):
-        plt.savefig(f"{output_path}/Avg_response_time_log.png", dpi=150)
+        plt.savefig(f"{output_path}/{string}_log.png", dpi=150)
 
     if show:
         plt.show()
@@ -137,3 +142,43 @@ def plot_p_dot_list(p_dot_list, stop_criterion_val, output_path=None, show=True)
 
     if show:
         plt.show()
+
+def compare_loyds_to_mw(response_mw, loyds_response, loyds_response_mw_voro, loyds_response_speed_eq, iteration):
+    # Find the longest list
+    max_length = max(len(response_mw), len(loyds_response), len(loyds_response_mw_voro), len(loyds_response_speed_eq))
+
+    # Plotting the lists
+    plt.figure()
+    list_names = ["MW Vor Time\u00B2", "Loyds vor Time\u00B2", "Loyds mw vor Time\u00B2", "Loyds equal speed Time\u00B2"]
+    # Iterate over the lists
+    for i, lst in enumerate([
+        response_mw,
+        loyds_response,
+        loyds_response_mw_voro, loyds_response_speed_eq
+    ]):
+        # Plot the values until the length of the current list
+        plt.plot(range(len(lst)), lst[:max_length], label=list_names[i])
+
+        # Plot the dotted line for the last value of the list
+        plt.plot(len(lst) - 1, lst[-1], 'o', linestyle='dotted', color=f'C{i}')
+
+    # Set the limits of the x-axis and y-axis
+    plt.xlim(0, max_length - 1)
+    plt.ylim(0, max(max(response_mw), max(loyds_response), max(loyds_response_mw_voro), max(loyds_response_speed_eq)))
+
+    # Add legend and labels
+    plt.legend()
+    plt.xlabel('Index')
+    plt.ylabel('Value')
+
+    # Show the plot
+    plt.savefig(f"compared_all_lists_{iteration}.png", dpi=150)
+    plt.show()
+
+
+# def export_data_run():
+#     data = {
+#
+#     }
+#     return None
+

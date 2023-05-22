@@ -102,12 +102,12 @@ class Robots:
         new_position = self.positions[index] + p_dot * dt
         self.positions[index] = new_position
 
-    def time_step_all(self, voronois, dt):
+    def time_step_all(self, voronois, dt, gain_p=1, loyds_=False):
         p_dot_list_i = []
         p_dot_max = 0
 
         for i in range(len(self.positions)):
-            p_dot = voronois[i].gradient_descent()
+            p_dot = voronois[i].gradient_descent(gain=gain_p, loyds=loyds_)
             new_position = self.positions[i] + p_dot * dt
             self.positions[i] = new_position
             if np.linalg.norm(p_dot) > p_dot_max:
