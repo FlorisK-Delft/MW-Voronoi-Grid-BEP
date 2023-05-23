@@ -181,11 +181,11 @@ def export_data_run(start_positions_and_v, end_positions_and_v, stop_criterion,
                     avg_response_time_mw_vor, p_dot_list, gain, step_dt, run_number,
                     output_path="."):
     data = {
+        "mw_vor_start_time": avg_response_time_mw_vor[0],
+        "mw_vor_end_time": avg_response_time_mw_vor[-1],
         "start_positions_and_v" : start_positions_and_v,
         "mw_vor_end_positions_and_v" : end_positions_and_v,
         "stop_criterion" : stop_criterion,
-        "mw_vor_start_time" : avg_response_time_mw_vor[0],
-        "mw_vor_end_time" : avg_response_time_mw_vor[-1],
         "mw_vor_response_time_list" : avg_response_time_mw_vor,
         "p_dot_list" : p_dot_list,
         "gain_for_p_dot" : gain,

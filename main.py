@@ -329,6 +329,10 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     # save avg_response_time and p_dot_list to csv
     # save_data(robots, avg_response_time, p_dot_list, dir_files)
 
+    # for the windows students:
+    now = datetime.datetime.now()
+    formatted_date_combined = now.strftime("%Y-%m-%d_%H-%M-%S")
+
     # create an overview of the most important data. So a test can be analysed quickly
     create_combined_image(
         start_index_png=f'{dir_files}/{0}.png',
@@ -338,7 +342,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
         start_time=avg_response_time[0],
         end_time=avg_response_time[-1],
         robot_info_list=robots.robot_p_and_v_array(),
-        output_path=f"{dir_files}/data_overview_{datetime.datetime.now()}.png"
+        output_path=f"{dir_files}/data_overview_{formatted_date_combined}.png"
     )
 
     if test == 0:
