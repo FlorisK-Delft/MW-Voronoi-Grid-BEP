@@ -4,6 +4,7 @@ import csv
 import json
 import imageio
 import matplotlib.pyplot as plt
+import os
 
 
 def create_combined_image(start_index_png, end_index_png, average_response_time_png,
@@ -52,37 +53,37 @@ def create_combined_image(start_index_png, end_index_png, average_response_time_
     result.save(output_path)
 
 
-def save_data(robots, avg_response_time, p_dot_list, output_path):
-    # save avg_response_time and p_dot_list to csv
-    with open(f'{output_path}/avg_response_time.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(avg_response_time)
-
-    with open(f'{output_path}/p_dot_list.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(p_dot_list)
-
-    # save start time, end time, quickest time and index of fastest time
-    times_data = {
-        'start_time': avg_response_time[0],
-        'end_time': avg_response_time[-1],
-    }
-
-    with open(f'{output_path}/times.json', 'w') as file:
-        json.dump(times_data, file, indent=4)
-
-    # save the location of the robots with their starting position
-    robots_data = {
-        f"Robot {i + 1}": {
-            "x": robots.return_position(i)[0],
-            "y": robots.return_position(i)[1],
-            "v": robots.return_max_speed(i)
-        }
-        for i in range(robots.number_of_robots())
-    }
-
-    with open(f'{output_path}/robots.json', 'w') as file:
-        json.dump(robots_data, file, indent=4)
+# def save_data(robots, avg_response_time, p_dot_list, output_path):
+#     # save avg_response_time and p_dot_list to csv
+#     with open(f'{output_path}/avg_response_time.csv', 'w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(avg_response_time)
+#
+#     with open(f'{output_path}/p_dot_list.csv', 'w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerows(p_dot_list)
+#
+#     # save start time, end time, quickest time and index of fastest time
+#     times_data = {
+#         'start_time': avg_response_time[0],
+#         'end_time': avg_response_time[-1],
+#     }
+#
+#     with open(f'{output_path}/times.json', 'w') as file:
+#         json.dump(times_data, file, indent=4)
+#
+#     # save the location of the robots with their starting position
+#     robots_data = {
+#         f"Robot {i + 1}": {
+#             "x": robots.return_position(i)[0],
+#             "y": robots.return_position(i)[1],
+#             "v": robots.return_max_speed(i)
+#         }
+#         for i in range(robots.number_of_robots())
+#     }
+#
+#     with open(f'{output_path}/robots.json', 'w') as file:
+#         json.dump(robots_data, file, indent=4)
 
 
 def save_gif(images_list, output_path):
@@ -176,9 +177,61 @@ def compare_loyds_to_mw(response_mw, loyds_response, loyds_response_mw_voro, loy
     plt.show()
 
 
-# def export_data_run():
-#     data = {
-#
-#     }
-#     return None
+def export_data_run(start_positions_and_v, end_positions_and_v, stop_criterion,
+                    avg_response_time_mw_vor, p_dot_list, gain, step_dt, run_number,
+                    output_path="."):
+    data = {
+        "start_positions_and_v" : start_positions_and_v,
+        "mw_vor_end_positions_and_v" : end_positions_and_v,
+        "stop_criterion" : stop_criterion,
+        "mw_vor_start_time" : avg_response_time_mw_vor[0],
+        "mw_vor_end_time" : avg_response_time_mw_vor[-1],
+        "mw_vor_response_time_list" : avg_response_time_mw_vor,
+        "p_dot_list" : p_dot_list,
+        "gain_for_p_dot" : gain,
+        "step_dt" : step_dt,
+    }
+    json_file_name = f'{output_path}/data_run_{run_number}.json'
+    with open(json_file_name, 'w') as file:
+        json.dump(data, file, indent=4)
 
+    return json_file_name
+
+def append_lloyds_run_to_data(existing_data_path, end_positions_and_v_lloyds,
+                              lloyds_avg_response_time, lloyds_avg_response_time_as_mw,
+                              lloyds_avg_response_time_speed_eq, gain_lloyds):
+    new_data = {
+        "lloyds_end_positions_and_v" : end_positions_and_v_lloyds,
+        "lloyds_avg_response_time" : lloyds_avg_response_time,
+        "lloyds_avg_response_time_as_mw" : lloyds_avg_response_time_as_mw,
+        "lloyds_avg_response_time_speed_eq" : lloyds_avg_response_time_speed_eq,
+        "lloyds_start_time_as_mw" : lloyds_avg_response_time_as_mw[0],
+        "lloyds_end_time_as_mw" : lloyds_avg_response_time_as_mw[-1],
+        "lloyds_start_time_speed_eq" : lloyds_avg_response_time_speed_eq[0],
+        "lloyds_end_time_speed_eq" : lloyds_avg_response_time_speed_eq[-1],
+        "gain_for_p_dot_lloyds" : gain_lloyds
+    }
+
+    with open(existing_data_path, 'r') as file:
+        existing_data = json.load(file)
+
+    existing_data.update(new_data)
+
+    with open(existing_data_path, 'w') as file:
+        json.dump(existing_data, file, indent=4)
+
+    return None
+
+def export_mesh(x_mesh, y_mesh, z_mesh, output_path):
+    data = {
+        "size_mesh": [z_mesh.shape[0], z_mesh.shape[1]],
+        "x_mesh": x_mesh.tolist(),
+        "y_mesh": y_mesh.tolist(),
+        "z_mesh": z_mesh.tolist()
+    }
+
+    json_file_name = f'{output_path}/global_mesh_data.json'
+    with open(json_file_name, 'w') as file:
+        json.dump(data, file, indent=4)
+
+    return json_file_name

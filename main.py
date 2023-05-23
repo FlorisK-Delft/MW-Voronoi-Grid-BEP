@@ -10,7 +10,7 @@ import os
 import datetime
 from classes import Plane, Robots
 from voronoi_mw import VoronoiMW, assign_robot2voronoi, get_border_voronoi, response_time_mw_voronoi
-from export_final import create_combined_image, save_data, save_gif, plot_avg_response_time, plot_p_dot_list, compare_loyds_to_mw
+from export_final import create_combined_image, save_gif, plot_avg_response_time, plot_p_dot_list, compare_loyds_to_mw, export_data_run, append_lloyds_run_to_data, export_mesh
 
 
 # Create necessary directory
@@ -34,6 +34,12 @@ def create_directory(run_number=None, loyds=False):
     os.makedirs(dir_files_name, exist_ok=True)
     return dir_files_name
 
+def create_global_directory():
+    now = datetime.datetime.now()
+    formatted_date = now.strftime("%Y-%m-%d_%H-%M-%S")
+    global_dir_name = f"global_dir_{formatted_date}"
+    os.makedirs(global_dir_name, exist_ok=True)
+    return global_dir_name
 
 def initialize_plane():
     init_plane = Plane([0, 10], [0, 10])
@@ -197,7 +203,7 @@ def plot_current(iteration, robots_class, z_mesh, current_voronois,
 
 
 def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, positions_sim=None,
-                        speed_sim=None, dt_sim=0.1, arrow_scale_sim=1, loyds_sim=False):
+                        speed_sim=None, dt_sim=0.1, arrow_scale_sim=1, loyds_sim=False, dir_json_file=None):
     # ---------------------------------------------------------------------------------------------------------------------
     dir_files = create_directory(test, loyds=loyds_sim)
 
@@ -208,6 +214,9 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
 
     robots, colors_robots = initialize_robots(plane, start_positions=positions_sim, init_speeds=speed_sim,
                                               all_black=True)
+
+    start_positions_to_save = (robots.robot_p_and_v_array()).tolist()
+
 
     if loyds_sim:
         gain = 1
@@ -318,7 +327,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     save_gif(images, dir_files)
 
     # save avg_response_time and p_dot_list to csv
-    save_data(robots, avg_response_time, p_dot_list, dir_files)
+    # save_data(robots, avg_response_time, p_dot_list, dir_files)
 
     # create an overview of the most important data. So a test can be analysed quickly
     create_combined_image(
@@ -332,11 +341,38 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
         output_path=f"{dir_files}/data_overview_{datetime.datetime.now()}.png"
     )
 
+    if test == 0:
+        export_mesh(
+            x, y, z,
+            output_path=global_dir
+        )
+
+
     if loyds_sim:
+        append_lloyds_run_to_data(dir_json_file,
+                                  (robots.robot_p_and_v_array()).tolist(),
+                                  avg_response_time,
+                                  avg_response_time_as_mw,
+                                  avg_response_time_speed_eq,
+                                  gain
+                                  )
         return avg_response_time, avg_response_time_as_mw, avg_response_time_speed_eq
     else:
-        return avg_response_time, 0, 0
+        dir = export_data_run(
+            start_positions_to_save,
+            (robots.robot_p_and_v_array()).tolist(),
+            stop_criterion_simulation,
+            avg_response_time,
+            p_dot_list,
+            gain,
+            dt,
+            test,
+            output_path=global_dir
+        )
+        return avg_response_time, 0, 0, dir
 
+
+global_dir = create_global_directory()
 
 for test in range(5):
     # Create the mesh grid
@@ -346,7 +382,7 @@ for test in range(5):
     # These are the most important variables to set!
     dt = 0.4  # the time step
     iterations = 800  # the maximum number of iterations
-    stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.3  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
     positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
     number_of_robots = 5
@@ -357,10 +393,10 @@ for test in range(5):
 
     # positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
     # ---------------------------------------------------------------------------------------------------------------------
-    response_time, _, _ = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
+    response_time, _, _ , dir_json = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
                         dt_sim=dt, arrow_scale_sim=6, loyds_sim=False)
     loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
-                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=True)
+                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=True, dir_json_file=dir_json)
 
     compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
 
