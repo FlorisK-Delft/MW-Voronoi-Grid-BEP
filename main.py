@@ -374,7 +374,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
 
 global_dir = create_global_directory()
 
-for test in range(5):
+for test in range(1):
     # Create the mesh grid
     plane, x, y = initialize_plane()
 
@@ -382,14 +382,30 @@ for test in range(5):
     # These are the most important variables to set!
     dt = 0.4  # the time step
     iterations = 800  # the maximum number of iterations
-    stop_criterion = 0.3  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
-    positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
+
     number_of_robots = 5
 
-    x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
-    y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_robots)
-    positions_robots_start = np.column_stack((x_random, y_random))
+    random_start_pos = False
+
+    if random_start_pos:
+        x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
+        y_random = np.random.uniform(plane.y_min, plane.y_max, number_of_robots)
+        positions_robots_start = np.column_stack((x_random, y_random))
+    else:
+        positions = np.array([
+            np.array([3.,4.]),
+            np.array([2.5,8.]),
+            np.array([4.,4.]),
+            np.array([2.5,7.]),
+            np.array([2.5,5.])
+        ])
+
+        positions_robots_start = positions
+
+
+
 
     # positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
     # ---------------------------------------------------------------------------------------------------------------------
