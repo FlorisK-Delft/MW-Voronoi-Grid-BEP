@@ -203,7 +203,7 @@ def plot_current(iteration, robots_class, z_mesh, current_voronois,
 
 
 def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, positions_sim=None,
-                        speed_sim=None, dt_sim=0.1, arrow_scale_sim=1, loyds_sim=False, dir_json_file=None):
+                        speed_sim=None, dt_sim=0.1, arrow_scale_sim=1, loyds_sim=False, dir_json_file=None, type_pdf_sim=1):
     # ---------------------------------------------------------------------------------------------------------------------
     dir_files = create_directory(test, loyds=loyds_sim)
 
@@ -211,7 +211,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     # z = initialize_gaussian(x, y, plane)
 
     # new way of defining z
-    z = pdfunction(x, y, type = 3, sigma_x=3.3, sigma_y=3.3)
+    z = pdfunction(x, y, type = type_pdf_sim, sigma_x=3.3, sigma_y=3.3)
 
     # choose random or static for testing:
     images = []
@@ -393,9 +393,11 @@ for test in range(150):
     stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
-    number_of_robots = 5
+    number_of_robots = 7
+    # speed_robots = [5, 5, 4, 4, 3, 2, 1]
+    speed_robots = [3, 3, 3, 2, 2, 2, 1]
 
-    random_start_pos = False
+    random_start_pos = True
 
     if random_start_pos:
         x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
@@ -412,17 +414,22 @@ for test in range(150):
 
         positions_robots_start = positions
 
-
-
+    type_pdf = 4  # see list of what types in probability density function file
 
     # positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
     # ---------------------------------------------------------------------------------------------------------------------
-    response_time, _, _ , dir_json = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
-                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=False)
-    loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y, positions_robots_start, speed_sim=[3, 3, 2, 2, 1],
-                        dt_sim=dt, arrow_scale_sim=6, loyds_sim=True, dir_json_file=dir_json)
+    response_time, _, _ , dir_json = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y,
+                                                         positions_robots_start, speed_sim=speed_robots, dt_sim=dt,
+                                                         arrow_scale_sim=6, loyds_sim=False, type_pdf_sim=type_pdf)
+    loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion,
+                                                                                          plane, x, y,
+                                                                                          positions_robots_start,
+                                                                                          speed_sim=[3, 3, 2, 2, 1],
+                                                                                          dt_sim=dt, arrow_scale_sim=6,
+                                                                                          loyds_sim=True,
+                                                                                          dir_json_file=dir_json)
 
-    compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
+    compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test, type_pdf=type_pdf)
 
     print(f"\nMW Vor Time\u00B2: {response_time[-1]}"
           f"\nLoyds vor Time\u00B2: {loyds_response_time[-1]}"
