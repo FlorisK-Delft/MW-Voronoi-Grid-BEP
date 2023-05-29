@@ -11,7 +11,7 @@ import datetime
 from classes import Plane, Robots
 from voronoi_mw import VoronoiMW, assign_robot2voronoi, get_border_voronoi, response_time_mw_voronoi
 from export_final import create_combined_image, save_gif, plot_avg_response_time, plot_p_dot_list, compare_loyds_to_mw, export_data_run, append_lloyds_run_to_data, export_mesh
-
+from probability_density_function import pdfunction
 
 # Create necessary directory
 def create_directory(run_number=None, loyds=False):
@@ -207,7 +207,11 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     # ---------------------------------------------------------------------------------------------------------------------
     dir_files = create_directory(test, loyds=loyds_sim)
 
-    z = initialize_gaussian(x, y, plane)
+    # old way of defining z, still in tact:
+    # z = initialize_gaussian(x, y, plane)
+
+    # new way of defining z
+    z = pdfunction(x, y, type = 3, sigma_x=3.3, sigma_y=3.3)
 
     # choose random or static for testing:
     images = []
@@ -386,12 +390,12 @@ for test in range(150):
     # These are the most important variables to set!
     dt = 0.4  # the time step
     iterations = 1000  # the maximum number of iterations
-    stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.02  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
     number_of_robots = 5
 
-    random_start_pos = True
+    random_start_pos = False
 
     if random_start_pos:
         x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
@@ -399,11 +403,11 @@ for test in range(150):
         positions_robots_start = np.column_stack((x_random, y_random))
     else:
         positions = np.array([
-            np.array([3.,4.]),
-            np.array([2.5,8.]),
-            np.array([4.,4.]),
             np.array([2.5,7.]),
-            np.array([2.5,5.])
+            np.array([2.7,4.]),
+            np.array([2.5,8.]),
+            np.array([1.8,4.]),
+            np.array([5.4,3.8])
         ])
 
         positions_robots_start = positions

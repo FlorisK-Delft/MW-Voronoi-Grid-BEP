@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
+show_start_pos = True
+
 root_dir = 'combined_global_dirs'
 map_with_json_files = f'{root_dir}/combined'
 
-json_files = [f for f in os.listdir(map_with_json_files) if f.endswith('.json') and f != 'global_mesh_data.json']
+json_files = [f for f in os.listdir(map_with_json_files) if f.endswith('.json') and f != 'global_mesh_data.json' and f != 'result_time_reduction.json']
 
 # Initialize min and max with infinity and negative infinity so any number from the data will replace them
 min_time = float('inf')
@@ -30,10 +32,14 @@ for json_file in json_files:
     with open(f'{map_with_json_files}/{json_file}', 'r') as f:
         data = json.load(f)
 
-    mw_vor_end_positions_and_v = data["start_positions_and_v"]
-    x_values = [item[0] for item in mw_vor_end_positions_and_v]
-    y_values = [item[1] for item in mw_vor_end_positions_and_v]
-    speed_values = [item[2] for item in mw_vor_end_positions_and_v]
+    if show_start_pos:
+        pos = data["mw_vor_end_positions_and_v"]
+    else:
+        pos = data["start_positions_and_v"]
+
+    x_values = [item[0] for item in pos]
+    y_values = [item[1] for item in pos]
+    speed_values = [item[2] for item in pos]
 
     # Normalize time to get an alpha value in the range [0.2, 0.8]
     alpha = 1 * (data["mw_vor_end_time"] - min_time) / (max_time - min_time) #+ 0.2
