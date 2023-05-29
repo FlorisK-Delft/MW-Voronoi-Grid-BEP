@@ -378,7 +378,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
 
 global_dir = create_global_directory()
 
-for test in range(80):
+for test in range(150):
     # Create the mesh grid
     plane, x, y = initialize_plane()
 
