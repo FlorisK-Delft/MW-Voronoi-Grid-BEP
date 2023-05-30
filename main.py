@@ -390,7 +390,7 @@ for test in range(150):
     # These are the most important variables to set!
     dt = 0.4  # the time step
     iterations = 1000  # the maximum number of iterations
-    stop_criterion = 0.003  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.002  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
     number_of_robots = 7
