@@ -388,14 +388,14 @@ for test in range(150):
 
     # ---------------------------------------------------------------------------------------------------------------------
     # These are the most important variables to set!
-    dt = 0.4  # the time step
+    dt = 0.3  # the time step
     iterations = 1000  # the maximum number of iterations
-    stop_criterion = 0.002  # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.0025 # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
-    number_of_robots = 7
+    number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]
-    speed_robots = [3, 3, 3, 2, 2, 2, 1]
+    speed_robots = [3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
     random_start_pos = True
 
@@ -434,9 +434,10 @@ for test in range(150):
                                                                                           speed_sim=speed_robots,
                                                                                           dt_sim=dt, arrow_scale_sim=6,
                                                                                           loyds_sim=True,
-                                                                                          dir_json_file=dir_json)
+                                                                                          dir_json_file=dir_json,
+                                                                                          type_pdf_sim=type_pdf)
 
-    compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test, type_pdf=type_pdf)
+    compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
 
     print(f"\nMW Vor Time\u00B2: {response_time[-1]}"
           f"\nLoyds vor Time\u00B2: {loyds_response_time[-1]}"

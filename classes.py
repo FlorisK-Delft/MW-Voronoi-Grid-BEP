@@ -107,11 +107,19 @@ class Robots:
         gain_for_max_list = []
         p_dot_max = 0
 
-        for i in range(len(self.positions)):
-            p_dot = voronois[i].gradient_descent(gain=gain_p, loyds=loyds_)
-            gain_for_max_list.append(voronois[i].speed / (np.linalg.norm(p_dot)))
+        if not loyds_:
+            for i in range(len(self.positions)):
+                p_dot = voronois[i].gradient_descent(gain=gain_p, loyds=loyds_)
 
-        gain = min((0.9 * min(gain_for_max_list)),20)
+                # if loyds_:
+                #     gain_for_max_list.append(1 / (np.linalg.norm(p_dot)))
+                # else:
+                gain_for_max_list.append(voronois[i].speed / (np.linalg.norm(p_dot)))
+
+            gain = min((0.95 * min(gain_for_max_list)), 25)
+            print(f"Gain for this iteration: {round(gain, 2)}")
+        else:
+            gain = 1
 
         for i in range(len(self.positions)):
             p_dot = voronois[i].gradient_descent(gain=gain, loyds=loyds_)
