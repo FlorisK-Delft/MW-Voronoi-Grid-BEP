@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # 1 = gaussian 2d (2 spreaded peaks)
 # 2 = gaussian 2d
 
@@ -24,7 +25,6 @@ def pdfunction(x_mesh, y_mesh, type=3, sigma_x=2, sigma_y=2):
         return trippel_gaussian(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
 
 
-
 def gaussian_2d_2(x_mesh, y_mesh, x0, y0, xsig, ysig):
     xsig_top = xsig
     ysig_top = ysig
@@ -45,10 +45,12 @@ def gaussian_2d_2(x_mesh, y_mesh, x0, y0, xsig, ysig):
     z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
     return z_mesh
 
+
 def gaussian_2d(x, y, x0, y0, xsig, ysig):
-    z_mesh =  np.exp(-10 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
+    z_mesh = np.exp(-10 * (((x - x0) / xsig) ** 2 + ((y - y0) / ysig) ** 2))
     z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
     return z_mesh
+
 
 def original_gaussian(x_mesh, y_mesh):
     xsig = 5.0
@@ -73,6 +75,7 @@ def original_gaussian(x_mesh, y_mesh):
     z_mesh = top_quadrant + bottom_quadrant
     z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
     return z_mesh
+
 
 def trippel_gaussian(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
     center_x_1 = x_center * 0.5

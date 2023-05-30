@@ -414,7 +414,14 @@ for test in range(150):
 
         positions_robots_start = positions
 
+    # type 1 = original
+    # type 2 = 1 gausian in the middel
+    # type 3 = 2 gausian top left and bottom right
+    # type 4 = 3 gausian, top left and right, bottom middle
+
     type_pdf = 4  # see list of what types in probability density function file
+
+
 
     # positions = np.array([[2.5, 1.5], [1, 8], [8, 8], [8, 1]])
     # ---------------------------------------------------------------------------------------------------------------------
@@ -424,7 +431,7 @@ for test in range(150):
     loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion,
                                                                                           plane, x, y,
                                                                                           positions_robots_start,
-                                                                                          speed_sim=[3, 3, 2, 2, 1],
+                                                                                          speed_sim=speed_robots,
                                                                                           dt_sim=dt, arrow_scale_sim=6,
                                                                                           loyds_sim=True,
                                                                                           dir_json_file=dir_json)
