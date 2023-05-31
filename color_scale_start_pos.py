@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-show_start_pos = True
+show_end_pos = True
+show_density_function = True
 
 root_dir = 'combined_global_dirs'
 map_with_json_files = f'{root_dir}/combined'
@@ -32,7 +33,7 @@ for json_file in json_files:
     with open(f'{map_with_json_files}/{json_file}', 'r') as f:
         data = json.load(f)
 
-    if show_start_pos:
+    if show_end_pos:
         pos = data["mw_vor_end_positions_and_v"]
     else:
         pos = data["start_positions_and_v"]
@@ -57,9 +58,33 @@ plt.legend(handles=[red_patch, green_patch, blue_patch], bbox_to_anchor=(0.5, -0
 
 plt.xlabel('X values')
 plt.ylabel('Y values')
-plt.title('Scatter plot of start_positions_and_v')
+if show_end_pos:
+    plt.title('End positions shorted on avg reaction speed')
+else:
+    plt.title('Start positions shorted on avg reaction speed')
 
 plt.subplots_adjust(bottom=0.2) # provide space at the bottom of the plot for the legend
 
-plt.savefig("color_start_pos.png", dpi=250)  # dpi is the resolution of each png
+if show_density_function:
+    # Load the JSON data
+    with open(f'{root_dir}/global_mesh_data.json', 'r') as f:
+        data = json.load(f)
+
+    # Get the z_mesh data
+    z_mesh_list = data['z_mesh']
+
+    # Convert the list to a numpy array
+    z_mesh = np.array(z_mesh_list)
+
+    # plot the gradient of the pdf (this is z)
+    plt.imshow(z_mesh, origin='lower',
+               extent=(0, 10, 0, 10),
+               alpha=0.25)
+    plt.colorbar()
+
+if show_end_pos:
+    plt.savefig("color_end_pos.png", dpi=250)  # dpi is the resolution of each png
+else:
+    plt.savefig("color_start_pos.png", dpi=250)  # dpi is the resolution of each png
+
 plt.show()

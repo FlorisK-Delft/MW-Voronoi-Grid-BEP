@@ -211,7 +211,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     # z = initialize_gaussian(x, y, plane)
 
     # new way of defining z
-    z = pdfunction(x, y, type = type_pdf_sim, sigma_x=3.3, sigma_y=3.3)
+    z = pdfunction(x, y, type = type_pdf_sim, sigma_x=5, sigma_y=5)
 
     # choose random or static for testing:
     images = []
@@ -390,7 +390,7 @@ for test in range(150):
     # These are the most important variables to set!
     dt = 0.3  # the time step
     iterations = 1000  # the maximum number of iterations
-    stop_criterion = 0.0025 # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.003 # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
     number_of_robots = 12
@@ -419,7 +419,7 @@ for test in range(150):
     # type 3 = 2 gausian top left and bottom right
     # type 4 = 3 gausian, top left and right, bottom middle
 
-    type_pdf = 4  # see list of what types in probability density function file
+    type_pdf = 6  # see list of what types in probability density function file
 
 
 

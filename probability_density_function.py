@@ -23,6 +23,11 @@ def pdfunction(x_mesh, y_mesh, type=3, sigma_x=2, sigma_y=2):
         return gaussian_2d_2(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
     elif type == 4:
         return trippel_gaussian(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
+    elif type == 5:
+        return two_different_sized_peaks(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
+    elif type == 6:
+        return trippel_gaussian_with_diff_speed(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
+
 
 
 def gaussian_2d_2(x_mesh, y_mesh, x0, y0, xsig, ysig):
@@ -90,6 +95,38 @@ def trippel_gaussian(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
     first_quadrant = np.exp(-8 * (((x_mesh - center_x_1) / xsig) ** 2 + ((y_mesh - center_y_1) / ysig) ** 2))
     second_quadrant = np.exp(-8 * (((x_mesh - center_x_2) / xsig) ** 2 + ((y_mesh - center_y_2) / ysig) ** 2))
     third_quadrant = np.exp(-8 * (((x_mesh - center_x_3) / xsig) ** 2 + ((y_mesh - center_y_3) / ysig) ** 2))
+
+    z_mesh = first_quadrant + second_quadrant + third_quadrant
+    z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
+    return z_mesh
+
+def two_different_sized_peaks(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
+    center_x_1 = x_center * 0.5
+    center_y_1 = y_center * 1.5
+
+    center_x_2 = x_center * 1.5
+    center_y_2 = y_center * 0.5
+
+    first_quadrant = 2*np.exp(-8 * (((x_mesh - center_x_1) / xsig) ** 2 + ((y_mesh - center_y_1) / ysig) ** 2))
+    second_quadrant = np.exp(-8 * (((x_mesh - center_x_2) / xsig) ** 2 + ((y_mesh - center_y_2) / ysig) ** 2))
+
+    z_mesh = first_quadrant + second_quadrant
+    z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
+    return z_mesh
+
+def trippel_gaussian_with_diff_speed(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
+    center_x_1 = x_center * 0.5
+    center_y_1 = y_center * 1.5
+
+    center_x_2 = x_center * 1.5
+    center_y_2 = y_center * 1.5
+
+    center_x_3 = x_center
+    center_y_3 = y_center * 0.5
+
+    first_quadrant = 2.5 * np.exp(-8 * (((x_mesh - center_x_1) / xsig) ** 2 + ((y_mesh - center_y_1) / ysig) ** 2))
+    second_quadrant = 1 * np.exp(-8 * (((x_mesh - center_x_2) / xsig) ** 2 + ((y_mesh - center_y_2) / ysig) ** 2))
+    third_quadrant = 1.75 * np.exp(-8 * (((x_mesh - center_x_3) / xsig) ** 2 + ((y_mesh - center_y_3) / ysig) ** 2))
 
     z_mesh = first_quadrant + second_quadrant + third_quadrant
     z_mesh /= z_mesh.sum()  # normalize z so the total is equal to 1
