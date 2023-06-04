@@ -419,7 +419,7 @@ for test in range(150):
     # type 3 = 2 gausian top left and bottom right
     # type 4 = 3 gausian, top left and right, bottom middle
 
-    type_pdf = 6  # see list of what types in probability density function file
+    type_pdf = 7  # see list of what types in probability density function file
 
 
 
