@@ -22,7 +22,7 @@ def pdfunction(x_mesh, y_mesh, type=3, sigma_x=2, sigma_y=2):
     elif type == 3:
         return gaussian_2d_2(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
     elif type == 4:
-        return trippel_gaussian(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
+        return triple_gaussian(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
     elif type == 5:
         return two_different_sized_peaks(x_mesh, y_mesh, x_center, y_center, sigma_x, sigma_y)
     elif type == 6:
@@ -82,7 +82,7 @@ def original_gaussian(x_mesh, y_mesh):
     return z_mesh
 
 
-def trippel_gaussian(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
+def triple_gaussian(x_mesh, y_mesh, x_center, y_center, xsig, ysig):
     center_x_1 = x_center * 0.5
     center_y_1 = y_center * 1.5
 
