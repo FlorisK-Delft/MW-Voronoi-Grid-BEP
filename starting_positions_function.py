@@ -83,7 +83,7 @@ def return_radius_center(z):
 
 print(return_radius_center(z))
 
-def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,2,2,2,1,1]):
+def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
     x_min = np.min(x_mesh)
     x_max = np.max(x_mesh)
 
@@ -126,15 +126,18 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,
         speed_counts_this_peak = {}
 
         for j, speed in enumerate(speed_counts):
+
             count_this_speed = speed_counts[speed]
             this_speed_this_peek = int(round(count_this_speed * mass_fractions[i]))
             speed_counts_this_peak[speed] = this_speed_this_peek
 
-            # save how many robots are left:
-            speed_counts[speed] = count_this_speed - this_speed_this_peek
-
         speed_counts_this_peak_list.append(speed_counts_this_peak)
-    
+
+    # save how much is still left
+    for speed_counts_this_peak in speed_counts_this_peak_list:
+        for key, value in speed_counts_this_peak.items():
+            speed_counts[key] -= value
+
     # devide the remaining robots, starting with the highest peak
     for i, speed in enumerate(speed_counts):
         if speed_counts[speed] == 0:
@@ -179,7 +182,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,
                 speed_robots.append(speed)
     return positions_robots, speed_robots
 
-initialize_starting_positions(xx, yy, z)
+# initialize_starting_positions(xx, yy, z)
 
 
 # peak = [50, 100]
