@@ -116,14 +116,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,
         mass_temp[i] = 0 # isn't counted for the weight for assigning the next robot
         rounded_num_robots_current_peak = int(round(mass_fraction*len(speed_list)))
 
-        speed_counts_this_peak = {}
-        for i, speed in enumerate(speed_counts):
-            count_this_speed = speed_counts[speed]
-            this_speed_this_peek = int(round(count_this_speed*mass_fraction))
-            speed_counts_this_peak[speed] = this_speed_this_peek
-
-            # save how much robots are left:
-            speed_counts[speed] = count_this_speed - this_speed_this_peek
+        speed_counts_this_peak = speed_counts_this_peak_list[i]
 
         # print(speed_counts_this_peak)
         r_step = x_mesh[0,radius_list_sorted[i]] * 1.25 / len(speed_counts)
