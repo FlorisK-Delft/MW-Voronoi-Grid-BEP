@@ -402,7 +402,7 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 7  # see list of what types in probability density function file
+    type_pdf = 4  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]

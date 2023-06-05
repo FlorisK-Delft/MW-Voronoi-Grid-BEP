@@ -122,7 +122,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
 
     speed_counts_this_peak_list = []
 
-    for i, peak in enumerate(peaks):
+    for i, peak in enumerate(peaks_sorted):
         speed_counts_this_peak = {}
 
         for j, speed in enumerate(speed_counts):
@@ -138,7 +138,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
         for key, value in speed_counts_this_peak.items():
             speed_counts[key] -= value
 
-    # devide the remaining robots, starting with the highest peak
+    # divide the remaining robots, starting with the highest peak
     for i, speed in enumerate(speed_counts):
         if speed_counts[speed] == 0:
             continue
@@ -148,14 +148,16 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
             speed_counts_this_peak[speed] += 1
             speed_counts_this_peak_list[j] = speed_counts_this_peak
 
-    for i, peak in enumerate(peaks):
+    for i, peak in enumerate(peaks_sorted):
+        print(peak)
         # mass_fraction = mass_temp[i]/mass_temp.sum()
         # mass_temp[i] = 0 # isn't counted for the weight for assigning the next robot
 
         speed_counts_this_peak = speed_counts_this_peak_list[i]
-
+        print(speed_counts_this_peak)
         # print(speed_counts_this_peak)
         r_step = x_mesh[0,radius_list_sorted[i]] * 1.25 / len(speed_counts)
+        print(f"r_step:{r_step}")
         x_center = x_mesh[peak[0], peak[1]]
         y_center = y_mesh[peak[0], peak[1]]
 
@@ -163,7 +165,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
 
         for i, speed in enumerate(speed_counts_this_peak):
             radius = (i + 1) * r_step
-
+            print(f"radius::{radius}")
             if speed_counts_this_peak[speed] == 0:
                 continue
 
@@ -171,7 +173,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
                 random_t = np.random.uniform(0, 2 * np.pi)  # random value between 0 and 2pi
                 x_values = x_center + radius * np.cos(random_t)
                 y_values = y_center + radius * np.sin(random_t)
-
+                print(f"x_values,y_values:{x_values},{y_values}")
                 # if the coordinates are out of bounds it will generate a new point until it isn't
                 while x_values < x_min or x_values > x_max or y_values < y_min or y_values > y_max:
                     random_t = np.random.uniform(0, 2 * np.pi)
@@ -180,10 +182,19 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
 
                 positions_robots = np.append(positions_robots, np.array([[x_values, y_values]]), axis=0)
                 speed_robots.append(speed)
+
     return positions_robots, speed_robots
 
-# initialize_starting_positions(xx, yy, z)
+speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
+robot_positions = initialize_starting_positions(xx, yy, z, speed_robots_init)[0]
+print(robot_positions)
+plt.figure(figsize=[10, 10])  # This sets the size of the figure
+for point in robot_positions:
+    plt.plot(point[0], point[1], 'o')
+plt.xlim([0, 10])  # This sets the limit of the x-axis
+plt.ylim([0, 10])  # This sets the limit of the y-axis
+plt.show()
 
 # peak = [50, 100]
 # peak_z = pdf[peak[0], peak[1]]
