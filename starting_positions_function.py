@@ -84,6 +84,14 @@ def return_radius_center(z):
 print(return_radius_center(z))
 
 def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,2,2,2,1,1]):
+    x_min = np.min(x_mesh)
+    x_max = np.max(x_mesh)
+
+    y_min = np.min(y_mesh)
+    y_max = np.max(y_mesh)
+
+    positions_robots = np.empty((0, 2))
+    speed_robots = []
 
     num_speeds = len(np.unique(speed_list))
     speed_counts = {}
@@ -110,11 +118,36 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,
     masses_sorted, radius_list_sorted, peaks_sorted = zip(*sorted_lists)
     mass_temp = np.array(masses_sorted)
 
+    mass_fractions = mass_temp/mass_temp.sum()
+
+    speed_counts_this_peak_list = []
 
     for i, peak in enumerate(peaks):
-        mass_fraction = mass_temp[i]/mass_temp.sum()
-        mass_temp[i] = 0 # isn't counted for the weight for assigning the next robot
-        rounded_num_robots_current_peak = int(round(mass_fraction*len(speed_list)))
+        speed_counts_this_peak = {}
+
+        for j, speed in enumerate(speed_counts):
+            count_this_speed = speed_counts[speed]
+            this_speed_this_peek = int(round(count_this_speed * mass_fractions[i]))
+            speed_counts_this_peak[speed] = this_speed_this_peek
+
+            # save how many robots are left:
+            speed_counts[speed] = count_this_speed - this_speed_this_peek
+
+        speed_counts_this_peak_list.append(speed_counts_this_peak)
+    
+    # devide the remaining robots, starting with the highest peak
+    for i, speed in enumerate(speed_counts):
+        if speed_counts[speed] == 0:
+            continue
+
+        for j in range(speed_counts[speed]):
+            speed_counts_this_peak = speed_counts_this_peak_list[j]
+            speed_counts_this_peak[speed] += 1
+            speed_counts_this_peak_list[j] = speed_counts_this_peak
+
+    for i, peak in enumerate(peaks):
+        # mass_fraction = mass_temp[i]/mass_temp.sum()
+        # mass_temp[i] = 0 # isn't counted for the weight for assigning the next robot
 
         speed_counts_this_peak = speed_counts_this_peak_list[i]
 
@@ -123,19 +156,28 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list=[3,3,3,3,3,
         x_center = x_mesh[peak[0], peak[1]]
         y_center = y_mesh[peak[0], peak[1]]
 
-        speed_counts_this_peak = {k: speed_counts_this_peak[k] for k in sorted(speed_counts_this_peak)}
+        speed_counts_this_peak = {k: speed_counts_this_peak[k] for k in sorted(speed_counts_this_peak, reverse=True)}
 
         for i, speed in enumerate(speed_counts_this_peak):
-            (i+1)*r_step
-            t_values = np.linspace(0, 2 * np.pi, 100)
+            radius = (i + 1) * r_step
 
-            x_values = x_center + radius * np.cos(t_values)
-            y_values = y_center + radius * np.sin(t_values)
+            if speed_counts_this_peak[speed] == 0:
+                continue
 
+            for j in range(speed_counts_this_peak[speed]):
+                random_t = np.random.uniform(0, 2 * np.pi)  # random value between 0 and 2pi
+                x_values = x_center + radius * np.cos(random_t)
+                y_values = y_center + radius * np.sin(random_t)
 
+                # if the coordinates are out of bounds it will generate a new point until it isn't
+                while x_values < x_min or x_values > x_max or y_values < y_min or y_values > y_max:
+                    random_t = np.random.uniform(0, 2 * np.pi)
+                    x_values = x_center + radius * np.cos(random_t)
+                    y_values = y_center + radius * np.sin(random_t)
 
-
-    print(masses_sorted, radius_list_sorted, peaks_sorted)
+                positions_robots = np.append(positions_robots, np.array([[x_values, y_values]]), axis=0)
+                speed_robots.append(speed)
+    return positions_robots, speed_robots
 
 initialize_starting_positions(xx, yy, z)
 
