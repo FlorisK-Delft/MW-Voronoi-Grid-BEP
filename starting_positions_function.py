@@ -25,14 +25,7 @@ def get_peaks(z):
     return peaks
 
 peaks = get_peaks(z)
-import numpy as np
-from scipy.ndimage import gaussian_filter
 
-# Create an example PDF
-pdf = np.random.rand(201, 201)
-
-# Apply a smoothing filter to make the values more gradual
-pdf = gaussian_filter(pdf, sigma=3)
 
 def circle_points(radius, center):
     points = []
@@ -185,16 +178,17 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
 
     return positions_robots, speed_robots
 
-speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
-robot_positions = initialize_starting_positions(xx, yy, z, speed_robots_init)[0]
-print(robot_positions)
-plt.figure(figsize=[10, 10])  # This sets the size of the figure
-for point in robot_positions:
-    plt.plot(point[0], point[1], 'o')
-plt.xlim([0, 10])  # This sets the limit of the x-axis
-plt.ylim([0, 10])  # This sets the limit of the y-axis
-plt.show()
+speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
+initialize_starting_positions_v2(xx, yy, z, speed_robots_init)
+# robot_positions = initialize_starting_positions(xx, yy, z, speed_robots_init)[0]
+# print(robot_positions)
+# plt.figure(figsize=[10, 10])  # This sets the size of the figure
+# for point in robot_positions:
+#     plt.plot(point[0], point[1], 'o')
+# plt.xlim([0, 10])  # This sets the limit of the x-axis
+# plt.ylim([0, 10])  # This sets the limit of the y-axis
+# plt.show()
 
 # peak = [50, 100]
 # peak_z = pdf[peak[0], peak[1]]
