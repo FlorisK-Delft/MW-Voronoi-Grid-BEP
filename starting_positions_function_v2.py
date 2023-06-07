@@ -116,7 +116,7 @@ def initialize_starting_positions_v2(x_mesh, y_mesh, z_mesh, speed_list):
         # Filter robots for the current speed category
         speed_robots = [robot for robot in robots if robot[0] == speed]
         # Distribute robots of this speed category to the peaks
-        unassigned = True
+        # unassigned = True
         while speed_robots:  # loop until no robots of this speed left [1, 0.23
             for i, mass_fraction in enumerate(mass_fractions):
                 assigned = False
@@ -132,10 +132,10 @@ def initialize_starting_positions_v2(x_mesh, y_mesh, z_mesh, speed_list):
                     assigned = True  # a robot was assigned
 
                 if not assigned:
-                    print("check") # no robot was assigned in the loop
+                    print(f"{len(speed_robots)} robot('s) with speed: {speed} are not assigned") # no robot was assigned in the loop
                     robots_not_assigned.append(robot)
                     speed_robots.remove(robot)
-                    break  # break the while loop
+                    continue  # break the while loop
 
         # Remove distributed robots from the original list
         robots = [robot for robot in robots if robot[0] != speed]
@@ -153,7 +153,6 @@ def initialize_starting_positions_v2(x_mesh, y_mesh, z_mesh, speed_list):
             combined_weight_robots[i] += robot[1]
             speed_robots.remove(robot)
 
-
         print(assignments)
 
     return assignments
@@ -162,25 +161,3 @@ speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
 initialize_starting_positions_v2(xx, yy, z, speed_robots_init)
 
-
-# def custom_sort(lst):
-#     unique_elements, counts = np.unique(lst, return_counts=True)
-#     unique_elements = unique_elements[::-1]  # reverse to get descending order
-#
-#     sorted_list = []
-#     while np.sum(counts) > 0:
-#         for i in range(len(unique_elements)):
-#             if counts[i] > 0:
-#                 sorted_list.append(unique_elements[i])
-#                 counts[i] -= 1
-#         # re-sort after each round to account for depleted counts
-#         sorting_indices = np.argsort(-counts)
-#         counts = counts[sorting_indices]
-#         unique_elements = unique_elements[sorting_indices]
-#
-#     return sorted_list
-#
-# lst = [4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
-# print(custom_sort(lst))
-#
-# lst2 = custom_sort(lst)

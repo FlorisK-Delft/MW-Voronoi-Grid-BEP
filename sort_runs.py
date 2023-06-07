@@ -5,7 +5,7 @@ import shutil
 # not of importance to us, so made with chat GPT!
 
 # The root directory that holds the 'global_dir...' directories
-root_dir = 'combined_global_dirs_run30mei_3punten_zelfde_groote'
+root_dir = 'combined_global_dirs_run4jun_andere_sigam_random'
 
 # Get a list of all 'global_dir...' directories
 subdirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]

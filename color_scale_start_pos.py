@@ -9,7 +9,7 @@ show_end_pos = True
 show_density_function = True
 show_circles = True
 
-root_dir = 'combined_global_dirs_run31mei_3punten_andere_groote'
+root_dir = 'combined_global_dirs_run4jun_andere_sigam_random'
 map_with_json_files = f'{root_dir}/combined'
 
 json_files = [f for f in os.listdir(map_with_json_files) if f.endswith('.json') and f != 'global_mesh_data.json' and f != 'result_time_reduction.json']
@@ -85,19 +85,19 @@ if show_density_function:
     plt.colorbar()
 
 if show_circles:
-    def plot_circles(radius, peak_indices):
-        fig, ax = plt.subplots()
-
-        # Plot the mesh grid
-        # Replace 'mesh' with your own mesh grid data
-        # For example, if you have a 2D array of values, use ax.imshow(mesh)
-        ax.imshow(mesh, cmap='gray')
-
-        # Plot circles around the peaks
-        for idx in peak_indices:
-            peak_x, peak_y = idx
-            circle = Circle((peak_x, peak_y), radius, color='red', fill=False)
-            ax.add_patch(circle)
+    # def plot_circles(radius, peak_indices):
+    #     fig, ax = plt.subplots()
+    #
+    #     # Plot the mesh grid
+    #     # Replace 'mesh' with your own mesh grid data
+    #     # For example, if you have a 2D array of values, use ax.imshow(mesh)
+    #     ax.imshow(mesh, cmap='gray')
+    #
+    #     # Plot circles around the peaks
+    #     for idx in peak_indices:
+    #         peak_x, peak_y = idx
+    #         circle = Circle((peak_x, peak_y), radius, color='red', fill=False)
+    #         ax.add_patch(circle)
 
     with open(f'{root_dir}/global_mesh_data.json', 'r') as f:
         data = json.load(f)
@@ -124,8 +124,8 @@ if show_circles:
 
 
 if show_end_pos:
-    plt.savefig("color_end_pos.png", dpi=250)  # dpi is the resolution of each png
+    plt.savefig(f"{root_dir}/color_end_pos.png", dpi=250)  # dpi is the resolution of each png
 else:
-    plt.savefig("color_start_pos.png", dpi=250)  # dpi is the resolution of each png
+    plt.savefig(f"{root_dir}/color_start_pos.png", dpi=250)  # dpi is the resolution of each png
 
 plt.show()

@@ -149,7 +149,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
         speed_counts_this_peak = speed_counts_this_peak_list[i]
         print(speed_counts_this_peak)
         # print(speed_counts_this_peak)
-        r_step = x_mesh[0,radius_list_sorted[i]] * 1.25 / len(speed_counts)
+        r_step = x_mesh[0, radius_list_sorted[i]] * 1.25 / len(speed_counts)
         print(f"r_step:{r_step}")
         x_center = x_mesh[peak[0], peak[1]]
         y_center = y_mesh[peak[0], peak[1]]
