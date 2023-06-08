@@ -117,6 +117,7 @@ def initialize_starting_positions_v2(x_mesh, y_mesh, z_mesh, speed_list):
         speed_robots = [robot for robot in robots if robot[0] == speed]
         # Distribute robots of this speed category to the peaks
         # unassigned = True
+
         while speed_robots:  # loop until no robots of this speed left [1, 0.23
             for i, mass_fraction in enumerate(mass_fractions):
                 assigned = False

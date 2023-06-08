@@ -5,11 +5,12 @@ from matplotlib.patches import Circle
 import matplotlib.patches as mpatches
 import numpy as np
 from starting_positions_function import return_radius_center
+
 show_end_pos = True
 show_density_function = True
 show_circles = True
 
-root_dir = 'combined_global_dirs_run4jun_andere_sigam_random'
+root_dir = 'combined_global_dirs_run30mei_3punten_zelfde_groote'
 map_with_json_files = f'{root_dir}/combined'
 
 json_files = [f for f in os.listdir(map_with_json_files) if f.endswith('.json') and f != 'global_mesh_data.json' and f != 'result_time_reduction.json']

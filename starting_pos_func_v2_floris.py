@@ -47,7 +47,7 @@ def get_highest_on_circle(pdf, center, peak_z):
             return r, points[values.index(max_value)], max_value, mass
     return None #adjust so it works for ellipses
 
-def speed_list_to_dict(speed_list, squared_speed = False):
+def speed_list_to_dict(speed_list, squared_speed = True):
     speed_list = np.array(speed_list)
 
     # Get the unique speeds in the list

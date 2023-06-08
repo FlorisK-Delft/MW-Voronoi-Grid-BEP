@@ -3,8 +3,11 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
-root_dir = 'combined_global_dirs'
+root_dir = 'combined_global_dirs_run4jun_andere_sigam_random'
 map_with_json_files = f'{root_dir}/combined'
+
+# if not os.path.exists(map_with_json_files):
+#     os.makedirs(map_with_json_files)
 
 json_files = [f for f in os.listdir(map_with_json_files) if f.endswith('.json') and f != 'global_mesh_data.json' and f != 'result_time_reduction.json']
 
