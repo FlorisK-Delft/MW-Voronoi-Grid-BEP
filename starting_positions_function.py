@@ -180,7 +180,7 @@ def initialize_starting_positions(x_mesh, y_mesh, z_mesh, speed_list):
 
 
 speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
-initialize_starting_positions_v2(xx, yy, z, speed_robots_init)
+initialize_starting_positions(xx, yy, z, speed_robots_init)
 # robot_positions = initialize_starting_positions(xx, yy, z, speed_robots_init)[0]
 # print(robot_positions)
 # plt.figure(figsize=[10, 10])  # This sets the size of the figure

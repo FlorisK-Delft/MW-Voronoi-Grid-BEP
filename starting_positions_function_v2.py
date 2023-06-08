@@ -160,4 +160,5 @@ def initialize_starting_positions_v2(x_mesh, y_mesh, z_mesh, speed_list):
 speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
 initialize_starting_positions_v2(xx, yy, z, speed_robots_init)
+print(return_radius_center(z))
 

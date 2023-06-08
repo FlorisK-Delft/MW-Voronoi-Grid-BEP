@@ -4,15 +4,16 @@ from probability_density_function import pdfunction
 from scipy.ndimage.filters import maximum_filter
 from scipy.ndimage.morphology import generate_binary_structure, binary_erosion
 
+import matplotlib.pyplot as plt
 
 
 resolution_x = (10 * 20 + 1)
 resolution_y = (10 * 20 + 1)
-x, y = np.meshgrid(
+xx, yy = np.meshgrid(
     np.linspace(0, 10, resolution_x),
     np.linspace(0, 10, resolution_y),
     )
-z = pdfunction(x, y, type = 6, sigma_x=3.3, sigma_y=3.3)
+z = pdfunction(xx, yy, type = 7, sigma_x=3.3, sigma_y=3.3)
 
 
 def get_peaks(z):
@@ -71,11 +72,11 @@ def speed_list_to_dict(speed_list, squared_speed = False):
     weights_dict = {speed: (speed ** power) for speed in sorted_dict.keys()}
 
     # Calculate the total weight
-    total_weight = sum([weight * count for speed, (weight, count) in zip(weights_dict.keys(), sorted_dict.items())])
+    total_weight = sum([weights_dict[speed] * count for speed, count in sorted_dict.items()])
+    print(total_weight)
 
     # Normalize the weights so that they sum up to 1
     normalized_weights_dict = {speed: (weight / total_weight) for speed, weight in weights_dict.items()}
-
     return sorted_dict, normalized_weights_dict
 
 
@@ -103,7 +104,7 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
     mass_peaks_array = np.array(masses_peaks)
 
     mass_fractions_peaks = mass_peaks_array / mass_peaks_array.sum()
-
+    print(mass_fractions_peaks)
     counts_robot_dict, weights_dict = speed_list_to_dict(speed_list)
 
     current_mass_robots = np.zeros(n_peaks)
@@ -125,8 +126,8 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
                 if current_mass_robots[i] + weights_dict[speed] <= mass_frac_peak:
                     counts_robot_dict[speed] -= 1
                     current_mass_robots[i] += weights_dict[speed]
+                    print(current_mass_robots)
                     robots_at_peak[i].append(speed)
-
                     not_assigned_at_peak = -1
 
                     print(f"Assigned a robot with speed {speed} to peak {i}, robots left with this speed: {counts_robot_dict[speed]}")
@@ -145,13 +146,81 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
 
             if continue_next_speed:
                 break
-
-
     print(robots_at_peak)
     print(counts_robot_dict)
 
+    # add remaining robots
+    for speed in counts_robot_dict:
+        if counts_robot_dict[speed] == 0:
+             continue
+        while counts_robot_dict[speed] > 0:
+            print(mass_fractions_peaks-current_mass_robots)
+            i = np.argmax(mass_fractions_peaks - current_mass_robots)
+            counts_robot_dict[speed] -= 1
+            current_mass_robots[i] += weights_dict[speed]
+            robots_at_peak[i].append(speed)
+
+    # put speed dictionaries for every peak in a list
+    speed_dictionaries = []
+    for speed_list_output in robots_at_peak:
+        speed_dictionaries.append(speed_list_to_dict(speed_list_output, squared_speed = False)[0])
+
+    #get plane bounds
+    x_min = np.min(x_mesh)
+    x_max = np.max(x_mesh)
+    print(x_min, x_max)
+    y_min = np.min(y_mesh)
+    y_max = np.max(y_mesh)
+    print(x_min, x_max)
+    # create empty array for robot positions and empty list for robot_speeds
+    positions_robots_out = np.empty((0, 2))
+    speed_robots_out = []
+    x_center_list = []
+    y_center_list = []
+    # iterate over peaks in x, y coordinates
+    for i, peak in enumerate(peaks_xy):
+
+        speed_list_peak = speed_dictionaries[i]
+        r_step = np.array(radius_list[i]) * 1.25 / len(speed_list_peak)
+        print(f"r_step:{r_step}")
+        x_center = peak[0]
+        y_center = peak[1]
+
+
+    # iterate over speed categories
+        for j, speed in enumerate(speed_list_peak):
+            radius = (j + 1) * r_step
+            print(f"radius::{radius}")
+            if speed_list_peak[speed] == 0:
+                continue
+            # iterate over robots in each speed category and generate points on circle
+            for k in range(speed_list_peak[speed]):
+                random_t = np.random.uniform(0, 2* np.pi)  # random value between 0 and 2pi
+                x_values = x_center + radius * np.cos(random_t)
+                y_values = y_center + radius * np.sin(random_t)
+                print(f"x_values,y_values:{x_values},{y_values}")
+                # if the coordinates are out of bounds it will generate a new point until it isn't
+                while x_values < x_min or x_values > x_max or y_values < y_min or y_values > y_max:
+                    random_t = np.pi
+                    x_values = x_center + radius * np.cos(random_t)
+                    y_values = y_center + radius * np.sin(random_t)
+                positions_robots_out = np.append(positions_robots_out, np.array([[x_values, y_values]]), axis=0)
+                speed_robots_out.append(speed)
+    return positions_robots_out, speed_robots_out
 
 speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
-distribute_robots_over_peaks(x, y, z, speed_robots_init)
+print(distribute_robots_over_peaks(xx, yy, z, speed_robots_init))
 
-print("iij")
+points = distribute_robots_over_peaks(xx, yy, z, speed_robots_init)[0]
+x_coords, y_coords = zip(*points)
+
+# plt.figure(figsize=(10,10))
+# plt.scatter(x_center_list, y_center_list, color='orange')  # Create scatter plot for the centers
+# plt.scatter(x_coords, y_coords)  # Create scatter plot
+# plt.xlabel('X')
+# plt.ylabel('Y')
+# plt.title('Scatter Plot of Points')
+# plt.xlim([0, 10])
+# plt.ylim([0, 10])
+#
+# plt.show()

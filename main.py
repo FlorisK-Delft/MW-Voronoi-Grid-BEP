@@ -12,7 +12,7 @@ from classes import Plane, Robots
 from voronoi_mw import VoronoiMW, assign_robot2voronoi, get_border_voronoi, response_time_mw_voronoi
 from export_final import create_combined_image, save_gif, plot_avg_response_time, plot_p_dot_list, compare_loyds_to_mw, export_data_run, append_lloyds_run_to_data, export_mesh
 from probability_density_function import pdfunction
-from starting_positions_function import initialize_starting_positions
+from starting_pos_func_v2_floris import distribute_robots_over_peaks
 
 # Create necessary directory
 def create_directory(run_number=None, loyds=False):
@@ -402,7 +402,7 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 4  # see list of what types in probability density function file
+    type_pdf = 7  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]
@@ -418,7 +418,7 @@ for test in range(150):
     elif random_start_pos == 2:
         z = pdfunction(x, y, type=type_pdf, sigma_x=5, sigma_y=5)
 
-        positions_robots_start, speed_robots = initialize_starting_positions(x, y, z, speed_list=speed_robots_init)
+        positions_robots_start, speed_robots = distribute_robots_over_peaks(x, y, z, speed_list=speed_robots_init)
     else:
         positions = np.array([
             np.array([2.5,7.]),
