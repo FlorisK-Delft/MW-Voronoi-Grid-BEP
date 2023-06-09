@@ -121,8 +121,8 @@ def plot_avg_response_time(avg_response_time_list, output_path=None, log=False, 
     elif (output_path is not None) and (log==True):
         plt.savefig(f"{output_path}/{string}_log.png", dpi=150)
 
-    if show:
-        plt.show()
+    # if show:
+    #     plt.show()
 
 
 def plot_p_dot_list(p_dot_list, stop_criterion_val, output_path=None, show=True):
@@ -141,8 +141,8 @@ def plot_p_dot_list(p_dot_list, stop_criterion_val, output_path=None, show=True)
     if output_path is not None:
         plt.savefig(f"{output_path}/Velocity_robots.png", dpi=150)
 
-    if show:
-        plt.show()
+    # if show:
+    #     plt.show()
 
 def compare_loyds_to_mw(response_mw, loyds_response, loyds_response_mw_voro, loyds_response_speed_eq, iteration):
     # Find the longest list
@@ -174,7 +174,7 @@ def compare_loyds_to_mw(response_mw, loyds_response, loyds_response_mw_voro, loy
 
     # Show the plot
     plt.savefig(f"compared_all_lists_{iteration}.png", dpi=150)
-    plt.show()
+    # plt.show()
 
 
 def export_data_run(start_positions_and_v, end_positions_and_v, stop_criterion,
