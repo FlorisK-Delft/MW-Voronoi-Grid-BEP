@@ -190,14 +190,14 @@ def plot_current(iteration, robots_class, z_mesh, current_voronois,
     images_list.append(imageio.v3.imread(filename))
 
     # show the total plot
-    if (iteration % show_every_n_times) == 0:
-        plt.show()
-    elif always_show:
-        plt.show()
-    elif last_iteration:
-        plt.show()
-    else:
-        plt.close()
+    # if (iteration % show_every_n_times) == 0:
+    #     plt.show()
+    # elif always_show:
+    #     plt.show()
+    # elif last_iteration:
+    #     plt.show()
+    # else:
+    plt.close()
         # plt.clf()
 
     return images_list
@@ -400,7 +400,7 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 7  # see list of what types in probability density function file
+    type_pdf = 6  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]

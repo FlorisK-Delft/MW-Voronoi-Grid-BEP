@@ -264,4 +264,4 @@ plt.imshow(z, origin='lower',
            extent=(0, 10, 0, 10),
            alpha=0.5)
 plt.colorbar()
-plt.show()
+# plt.show()
