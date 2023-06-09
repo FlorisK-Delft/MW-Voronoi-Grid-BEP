@@ -7,13 +7,13 @@ from scipy.ndimage.morphology import generate_binary_structure, binary_erosion
 import matplotlib.pyplot as plt
 
 
-resolution_x = (10 * 20 + 1)
-resolution_y = (10 * 20 + 1)
-xx, yy = np.meshgrid(
-    np.linspace(0, 10, resolution_x),
-    np.linspace(0, 10, resolution_y),
-    )
-z = pdfunction(xx, yy, type = 7)
+# resolution_x = (10 * 20 + 1)
+# resolution_y = (10 * 20 + 1)
+# xx, yy = np.meshgrid(
+#     np.linspace(0, 10, resolution_x),
+#     np.linspace(0, 10, resolution_y),
+#     )
+# z = pdfunction(xx, yy, type = 7)
 
 
 def get_peaks(z):
@@ -90,7 +90,7 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
 
     for peak in peaks_ij:
         peak_z = z_mesh[peak[0], peak[1]]
-        radius, _, max_val, mass = get_highest_on_circle(z, peak, peak_z)
+        radius, _, max_val, mass = get_highest_on_circle(z_mesh, peak, peak_z)
         radius_list.append(x_mesh[0, radius])
 
         masses_peaks.append(mass)
