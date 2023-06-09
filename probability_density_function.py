@@ -250,18 +250,18 @@ def quadrant_gaussian_diff_sigma(x_mesh, y_mesh, x_center, y_center, xsig, ysig)
 
 
 
-plt.figure()
-
-resolution_x = (10 * 20 + 1)
-resolution_y = (10 * 20 + 1)
-xx, yy = np.meshgrid(
-    np.linspace(0, 10, resolution_x),
-    np.linspace(0, 10, resolution_y),
-    )
-z = pdfunction(xx, yy, type = 9)
-
-plt.imshow(z, origin='lower',
-           extent=(0, 10, 0, 10),
-           alpha=0.5)
-plt.colorbar()
-# plt.show()
+# plt.figure()
+#
+# resolution_x = (10 * 20 + 1)
+# resolution_y = (10 * 20 + 1)
+# xx, yy = np.meshgrid(
+#     np.linspace(0, 10, resolution_x),
+#     np.linspace(0, 10, resolution_y),
+#     )
+# z = pdfunction(xx, yy, type = 9)
+#
+# plt.imshow(z, origin='lower',
+#            extent=(0, 10, 0, 10),
+#            alpha=0.5)
+# plt.colorbar()
+# # plt.show()
