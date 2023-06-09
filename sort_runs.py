@@ -5,7 +5,7 @@ import shutil
 # not of importance to us, so made with chat GPT!
 
 # The root directory that holds the 'global_dir...' directories
-root_dir = 'combined_global_dirs_chosen_starts_3peaks_diff_sigma'
+root_dir = 'bullshit_combined_global_dirs_chosen_starts_3peaks_diff_sigma_valentijn_power1'
 
 # Get a list of all 'global_dir...' directories
 subdirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]
@@ -39,3 +39,4 @@ for i, (time, file_path, data) in enumerate(file_times):
         json.dump(data, f, indent=4)  # The indent parameter is optional. It makes the JSON file easier to read.
     # Move the modified file to the new directory
     shutil.copy(file_path, new_file_path)
+

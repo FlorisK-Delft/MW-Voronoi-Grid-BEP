@@ -13,7 +13,7 @@ xx, yy = np.meshgrid(
     np.linspace(0, 10, resolution_x),
     np.linspace(0, 10, resolution_y),
     )
-z = pdfunction(xx, yy, type = 7, sigma_x=3.3, sigma_y=3.3)
+z = pdfunction(xx, yy, type = 7)
 
 
 def get_peaks(z):
@@ -208,11 +208,11 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
                 speed_robots_out.append(speed)
     return positions_robots_out, speed_robots_out
 
-speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
-print(distribute_robots_over_peaks(xx, yy, z, speed_robots_init))
-
-points = distribute_robots_over_peaks(xx, yy, z, speed_robots_init)[0]
-x_coords, y_coords = zip(*points)
+# speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
+# print(distribute_robots_over_peaks(xx, yy, z, speed_robots_init))
+#
+# points = distribute_robots_over_peaks(xx, yy, z, speed_robots_init)[0]
+# x_coords, y_coords = zip(*points)
 
 # plt.figure(figsize=(10,10))
 # plt.scatter(x_center_list, y_center_list, color='orange')  # Create scatter plot for the centers

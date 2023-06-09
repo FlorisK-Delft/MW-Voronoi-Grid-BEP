@@ -212,7 +212,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
     # z = initialize_gaussian(x, y, plane)
 
     # new way of defining z
-    z = pdfunction(x, y, type = type_pdf_sim, sigma_x=5, sigma_y=5)
+    z = pdfunction(x, y, type = type_pdf_sim)
 
     # choose random or static for testing:
     images = []
@@ -253,8 +253,6 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
             avg_response_time_as_mw.append(response_time_mw_voronoi(x, y, z, robots))
             avg_response_time_speed_eq.append(avg_time_speed_eq)
 
-        # this plot is with the current position and current location
-        # plot_current(i,,
 
         images = plot_current(i, robots, z, voronois, plane, colors_robots, images, dir_files,
                               arrow_scale_var=arrow_scale_sim, last_iteration=False)
@@ -416,7 +414,7 @@ for test in range(150):
         positions_robots_start = np.column_stack((x_random, y_random))
         speed_robots = speed_robots_init
     elif random_start_pos == 2:
-        z = pdfunction(x, y, type=type_pdf, sigma_x=5, sigma_y=5)
+        z = pdfunction(x, y, type=type_pdf)
 
         positions_robots_start, speed_robots = distribute_robots_over_peaks(x, y, z, speed_list=speed_robots_init)
     else:

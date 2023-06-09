@@ -3,7 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
-root_dir = 'combined_global_dirs_run4jun_andere_sigam_random'
+root_dir = 'combined_global_dirs_run30mei_3punten_zelfde_groote'
 map_with_json_files = f'{root_dir}/combined'
 
 # if not os.path.exists(map_with_json_files):
@@ -87,9 +87,9 @@ with open(json_file_name, 'w') as file:
 # make a plot how the average value converges
 # At the end of your script, plot the results
 plt.figure(figsize=(10, 6))
-plt.plot(start_time_avg_over_time, label='Start Time Avg')
+# plt.plot(start_time_avg_over_time, label='Start Time Avg')
 plt.plot(mw_vor_end_time_avg_over_time, label='MW Voronoi End Time Avg')
-plt.plot(lloyds_end_time_as_mw_avg_over_time, label='Lloyd\'s End Time as MW Avg')
+# plt.plot(lloyds_end_time_as_mw_avg_over_time, label='Lloyd\'s End Time as MW Avg')
 plt.xlabel('Step')
 plt.ylabel('Average Time')
 plt.title('Average Times Over Data Points')
@@ -107,9 +107,9 @@ relative_avg_mw_vor_end_time = [x - final_avg_mw_vor_end_time for x in mw_vor_en
 relative_avg_lloyds_end_time_as_mw = [x - final_avg_lloyds_end_time_as_mw for x in lloyds_end_time_as_mw_avg_over_time]
 
 plt.figure(figsize=(10, 6))
-plt.plot(relative_avg_start_time, label='Start Time Avg')
+# plt.plot(relative_avg_start_time, label='Start Time Avg')
 plt.plot(relative_avg_mw_vor_end_time, label='MW Voronoi End Time Avg')
-plt.plot(relative_avg_lloyds_end_time_as_mw, label='Lloyd\'s End Time as MW Avg')
+# plt.plot(relative_avg_lloyds_end_time_as_mw, label='Lloyd\'s End Time as MW Avg')
 plt.xlabel('Step')
 plt.ylabel('Relative Average Time')
 plt.title('Relative Average Times Over Steps')
