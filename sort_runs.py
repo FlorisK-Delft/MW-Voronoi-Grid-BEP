@@ -5,10 +5,14 @@ import shutil
 # not of importance to us, so made with chat GPT!
 
 # The root directory that holds the 'global_dir...' directories
-root_dir = 'bullshit_combined_global_dirs_chosen_starts_3peaks_diff_sigma_valentijn_power1'
+root_dir = input("Give the path you want to sort:")
 
 # Get a list of all 'global_dir...' directories
-subdirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]
+try:
+    subdirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]
+except FileNotFoundError:
+    root_dir = "data/" + root_dir
+    subdirs = [os.path.join(root_dir, d) for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]
 
 # Collect the 'mw_vor_start_time' from each file along with its path
 file_times = []

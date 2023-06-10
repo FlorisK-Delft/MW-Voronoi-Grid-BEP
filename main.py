@@ -328,7 +328,7 @@ def simulate_mw_voronoi(max_iterations, stop_criterion_simulation, plane, x, y, 
 
     # create the gif:
     save_gif(images, dir_files)
-
+    images = []
     # save avg_response_time and p_dot_list to csv
     # save_data(robots, avg_response_time, p_dot_list, dir_files)
 
@@ -400,7 +400,7 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 6  # see list of what types in probability density function file
+    type_pdf = 3  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]

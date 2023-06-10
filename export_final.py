@@ -51,6 +51,7 @@ def create_combined_image(start_index_png, end_index_png, average_response_time_
 
     # Save the final image
     result.save(output_path)
+    result.close()
 
 
 # def save_data(robots, avg_response_time, p_dot_list, output_path):

@@ -6,8 +6,8 @@ import matplotlib.font_manager as fm
 import numpy as np
 import textwrap
 
-dir_random_start = "combined_global_dirs_run4jun_andere_sigam_random"
-dir_chosen_start = "combined_global_dirs_chosen_starts_3peaks_diff_sigma"
+dir_random_start = "data/3unequal_height_random_type6"
+dir_chosen_start = "data/3unequal_height_chosen_type6"
 
 
 def get_z_mesh_from(dir):

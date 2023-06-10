@@ -258,10 +258,10 @@ def quadrant_gaussian_diff_sigma(x_mesh, y_mesh, x_center, y_center, xsig, ysig)
 #     np.linspace(0, 10, resolution_x),
 #     np.linspace(0, 10, resolution_y),
 #     )
-# z = pdfunction(xx, yy, type = 9)
+# z = pdfunction(xx, yy, type = 4)
 #
 # plt.imshow(z, origin='lower',
 #            extent=(0, 10, 0, 10),
 #            alpha=0.5)
 # plt.colorbar()
-# # plt.show()
+# plt.show()
