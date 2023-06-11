@@ -435,19 +435,21 @@ for test in range(150):
     response_time, _, _ , dir_json = simulate_mw_voronoi(iterations, stop_criterion, plane, x, y,
                                                          positions_robots_start, speed_sim=speed_robots, dt_sim=dt,
                                                          arrow_scale_sim=6, loyds_sim=False, type_pdf_sim=type_pdf)
-    # loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion,
-    #                                                                                       plane, x, y,
-    #                                                                                       positions_robots_start,
-    #                                                                                       speed_sim=speed_robots,
-    #                                                                                       dt_sim=dt, arrow_scale_sim=6,
-    #                                                                                       loyds_sim=True,
-    #                                                                                       dir_json_file=dir_json,
-    #                                                                                       type_pdf_sim=type_pdf)
-    #
-    # compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
-    #
-    # print(f"\nMW Vor Time\u00B2: {response_time[-1]}"
-    #       f"\nLoyds vor Time\u00B2: {loyds_response_time[-1]}"
-    #       f"\nLoyds mw vor Time\u00B2: {loyds_mw_voronoi_time[-1]}"
-    #       f"\nLoyds equal speed Time\u00B2: {loyds_time_speed_eq[-1]}"
-    #       )
+
+    if random_start_pos == 1:
+        loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq = simulate_mw_voronoi(iterations, stop_criterion,
+                                                                                              plane, x, y,
+                                                                                              positions_robots_start,
+                                                                                              speed_sim=speed_robots,
+                                                                                              dt_sim=dt, arrow_scale_sim=6,
+                                                                                              loyds_sim=True,
+                                                                                              dir_json_file=dir_json,
+                                                                                              type_pdf_sim=type_pdf)
+
+        compare_loyds_to_mw(response_time, loyds_response_time, loyds_mw_voronoi_time, loyds_time_speed_eq, test)
+
+        print(f"\nMW Vor Time\u00B2: {response_time[-1]}"
+              f"\nLoyds vor Time\u00B2: {loyds_response_time[-1]}"
+              f"\nLoyds mw vor Time\u00B2: {loyds_mw_voronoi_time[-1]}"
+              f"\nLoyds equal speed Time\u00B2: {loyds_time_speed_eq[-1]}"
+              )
