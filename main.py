@@ -389,7 +389,7 @@ for test in range(150):
     # These are the most important variables to set!
     dt = 0.3  # the time step
     iterations = 1000  # the maximum number of iterations
-    stop_criterion = 0.003 # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
+    stop_criterion = 0.47 # if the fastest robot moves slower (p_dot) than the stop criterion the algorithm will break
     arrow_scale = 6  # to decide how the arrows should be shown
 
     # type 1 = original
@@ -400,13 +400,13 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 3  # see list of what types in probability density function file
+    type_pdf = 8  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]
     speed_robots_init = [3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
-    random_start_pos = 1
+    random_start_pos = 2
 
     if random_start_pos == 1:
         x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
