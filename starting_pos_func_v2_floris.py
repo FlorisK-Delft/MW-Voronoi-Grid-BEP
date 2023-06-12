@@ -36,16 +36,22 @@ def create_circular_mask(center, radius, shape):
     mask = dist_from_center <= radius
     return mask
 
+
 def get_highest_on_circle(pdf, center, peak_z):
-    for r in range(1, min(center[0], center[1], pdf.shape[0] - center[0], pdf.shape[1] - center[1])):
+    max_radius = max(pdf.shape[0], pdf.shape[1])  # change this line to get the max dimension
+    for r in range(1, max_radius):
         points = circle_points(r, center)
+        points = [(p[0], p[1]) for p in points if 0 <= p[0] < pdf.shape[0] and 0 <= p[1] < pdf.shape[1]]
+        if not points:
+            continue
         values = [pdf[p[0], p[1]] for p in points]
         max_value = max(values)
         if max_value <= peak_z / 2:
             mask = create_circular_mask(center, r, pdf.shape)
             mass = np.sum(pdf[mask])
             return r, points[values.index(max_value)], max_value, mass
-    return None #adjust so it works for ellipses
+    raise Exception('No valid points found on any circle')
+
 
 def speed_list_to_dict(speed_list, squared_speed = True):
     speed_list = np.array(speed_list)
@@ -73,7 +79,7 @@ def speed_list_to_dict(speed_list, squared_speed = True):
 
     # Calculate the total weight
     total_weight = sum([weights_dict[speed] * count for speed, count in sorted_dict.items()])
-    print(total_weight)
+    # print(total_weight)
 
     # Normalize the weights so that they sum up to 1
     normalized_weights_dict = {speed: (weight / total_weight) for speed, weight in weights_dict.items()}
@@ -104,14 +110,14 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
     mass_peaks_array = np.array(masses_peaks)
 
     mass_fractions_peaks = mass_peaks_array / mass_peaks_array.sum()
-    print(mass_fractions_peaks)
+    # print(mass_fractions_peaks)
     counts_robot_dict, weights_dict = speed_list_to_dict(speed_list)
 
     current_mass_robots = np.zeros(n_peaks)
     robots_at_peak = [[] for _ in range(n_peaks)]
 
     for speed in counts_robot_dict:
-        print(speed)
+        # print(speed)
 
         if counts_robot_dict[speed] == 0:
             continue
@@ -195,17 +201,24 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
                 continue
             # iterate over robots in each speed category and generate points on circle
             for k in range(speed_list_peak[speed]):
-                random_t = np.random.uniform(0, 2* np.pi)  # random value between 0 and 2pi
-                x_values = x_center + radius * np.cos(random_t)
-                y_values = y_center + radius * np.sin(random_t)
-                print(f"x_values,y_values:{x_values},{y_values}")
-                # if the coordinates are out of bounds it will generate a new point until it isn't
-                while x_values < x_min or x_values > x_max or y_values < y_min or y_values > y_max:
-                    random_t = np.pi
+                stop_after = 0
+                while stop_after < 50:  # keep looping until we break
+                    random_t = np.random.uniform(0, 2 * np.pi)  # random value between 0 and 2pi
                     x_values = x_center + radius * np.cos(random_t)
                     y_values = y_center + radius * np.sin(random_t)
+
+                    # Check if the generated values fall within the desired range
+                    if x_min <= x_values <= x_max and y_min <= y_values <= y_max:
+                        print(f"x: {x_values}, y: {y_values} didn't fit, try new random pos.\n")
+                        break  # If they do, we break out of the loop
+                    else:
+                        stop_after += 1
+                        continue  # If they don't, we go back to the start of the loop and generate new values
+
+                print(f"x: {x_values}, y: {y_values}")
                 positions_robots_out = np.append(positions_robots_out, np.array([[x_values, y_values]]), axis=0)
                 speed_robots_out.append(speed)
+
     return positions_robots_out, speed_robots_out
 
 # speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]

@@ -6,8 +6,9 @@ import matplotlib.font_manager as fm
 import numpy as np
 import textwrap
 
-dir_random_start = "data/3unequal_height_random_type6"
-dir_chosen_start = "data/3unequal_height_chosen_type6"
+# dir_random_start = "data/3unequal_height_random_type6"
+# dir_chosen_start = "data/3unequal_height_chosen_type6"
+
 
 
 def get_z_mesh_from(dir):
@@ -62,22 +63,6 @@ def relative_difference(a, b):
     return np.abs((a - b) / ((a + b) / 2))
 
 
-# Load meshes
-z_mesh_random_start = get_z_mesh_from(dir_random_start)
-z_mesh_chosen_start = get_z_mesh_from(dir_chosen_start)
-
-# If the maximum relative difference is more than 1%, plot the meshes --> 1% due to small rounding errors etc.
-if np.max(relative_difference(z_mesh_random_start, z_mesh_chosen_start)) > 0.01:
-    plot_meshes(z_mesh_random_start, z_mesh_chosen_start, dir_random_start, dir_chosen_start)
-    print("You can't compare if the maximum relative difference between density functions is more than 1%.")
-    exit(1)
-elif stop_criterion_dir(dir_random_start) != stop_criterion_dir(dir_chosen_start):
-    print("Stop criterion is not the same for both directories.")
-    exit(1)
-else:
-    print("Meshes overlap for >99%, we are able to compare them.\nContinue script.\n")
-
-
 def return_list_of_data(dir):
     list_mw_vor_start_time = []
     list_mw_vor_end_time = []
@@ -99,53 +84,73 @@ def return_list_of_data(dir):
     return list_mw_vor_start_time, list_mw_vor_end_time, list_number_iterations, number_of_runs
 
 
-list_mw_vor_start_time_random, list_mw_vor_end_time_random, list_number_iterations_random, number_of_runs_random = return_list_of_data(
-    dir_random_start)
-list_mw_vor_start_time_chosen, list_mw_vor_end_time_chosen, list_number_iterations_chosen, number_of_runs_chosen = return_list_of_data(
-    dir_chosen_start)
+def compare_random_chosen(dir_random_start, dir_chosen_start, output_path, show_plot=False):
+    # Load meshes
+    z_mesh_random_start = get_z_mesh_from(dir_random_start)
+    z_mesh_chosen_start = get_z_mesh_from(dir_chosen_start)
 
-print(list_mw_vor_end_time_chosen)
-print(list_mw_vor_end_time_random)
+    # If the maximum relative difference is more than 1%, plot the meshes --> 1% due to small rounding errors etc.
+    if np.max(relative_difference(z_mesh_random_start, z_mesh_chosen_start)) > 0.01:
+        plot_meshes(z_mesh_random_start, z_mesh_chosen_start, dir_random_start, dir_chosen_start)
+        print("You can't compare if the maximum relative difference between density functions is more than 1%.")
+        exit(1)
+    elif stop_criterion_dir(dir_random_start) != stop_criterion_dir(dir_chosen_start):
+        print("Stop criterion is not the same for both directories.")
+        exit(1)
+    else:
+        print("Meshes overlap for >99%, we are able to compare them.\nContinue script.\n")
 
-print(
-    f"Average number of iterations for random: {sum(list_number_iterations_random) / len(list_number_iterations_random)}")
-print(
-    f"Average number of iterations for chosen: {sum(list_number_iterations_chosen) / len(list_number_iterations_chosen)}")
+    list_mw_vor_start_time_random, list_mw_vor_end_time_random, list_number_iterations_random, number_of_runs_random = return_list_of_data(
+        dir_random_start)
+    list_mw_vor_start_time_chosen, list_mw_vor_end_time_chosen, list_number_iterations_chosen, number_of_runs_chosen = return_list_of_data(
+        dir_chosen_start)
 
-# ------------------------------------------------------------------------
-# Start of making the boxplot
+    # print(list_mw_vor_end_time_chosen)
+    # print(list_mw_vor_end_time_random)
+
+    print(
+        f"Average number of iterations for random: {sum(list_number_iterations_random) / len(list_number_iterations_random)}")
+    print(
+        f"Average number of iterations for chosen: {sum(list_number_iterations_chosen) / len(list_number_iterations_chosen)}")
+
+    # ------------------------------------------------------------------------
+    # Start of making the boxplot
 
 
-font_path_regular = './lmroman7-regular.otf'
-font_prop_regular = fm.FontProperties(fname=font_path_regular)
+    font_path_regular = './lmroman7-regular.otf'
+    font_prop_regular = fm.FontProperties(fname=font_path_regular)
 
-font_path_bold = './lmroman7-bold.otf'
-font_prop_bold = fm.FontProperties(fname=font_path_bold)
+    font_path_bold = './lmroman7-bold.otf'
+    font_prop_bold = fm.FontProperties(fname=font_path_bold)
 
-fig = plt.figure(figsize=(10 / 1.1, 6 / 1.1))
-ax = fig.add_subplot(111)
+    fig = plt.figure(figsize=(10 / 1.1, 6 / 1.1))
+    ax = fig.add_subplot(111)
 
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
 
-ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(3))
-ax.yaxis.grid(True, which='both', linestyle='-', color='lightgrey', alpha=0.7)
+    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(3))
+    ax.yaxis.grid(True, which='both', linestyle='-', color='lightgrey', alpha=0.7)
 
-box_width = 0.4
+    box_width = 0.4
 
-# Plot data
-boxplot_data = [list_mw_vor_end_time_random, list_mw_vor_end_time_chosen]
-bp = ax.boxplot(boxplot_data, widths=box_width, medianprops={'linewidth': 3})
+    # Plot data
+    boxplot_data = [list_mw_vor_end_time_random, list_mw_vor_end_time_chosen]
+    bp = ax.boxplot(boxplot_data, widths=box_width, medianprops={'linewidth': 3})
 
-labels = [f'Random start positions, $n={number_of_runs_random}$',
-          f'Chosen start positions, $n={number_of_runs_chosen}$']
-ax.set_xticklabels(labels, fontproperties=font_prop_regular, fontsize=16)
+    labels = [f'Random start positions, $n={number_of_runs_random}$',
+              f'Chosen start positions, $n={number_of_runs_chosen}$']
+    ax.set_xticklabels(labels, fontproperties=font_prop_regular, fontsize=16)
 
-ax.set_ylabel('Average response time\u00B2', fontproperties=font_prop_regular, fontsize=16)
+    ax.set_ylabel('Average response time\u00B2', fontproperties=font_prop_regular, fontsize=16)
 
-# title = 'Comparison of average response time²\nof final distribution'  # nog mee nemen hier tT met een streepje
-# wrapped_title = textwrap.fill(title, 37)  # Adjust the line width as needed
-# ax.set_title(wrapped_title, fontproperties=font_prop_bold, fontsize=20)
+    # title = 'Comparison of average response time²\nof final distribution'  # nog mee nemen hier tT met een streepje
+    # wrapped_title = textwrap.fill(title, 37)  # Adjust the line width as needed
+    # ax.set_title(wrapped_title, fontproperties=font_prop_bold, fontsize=20)
 
-plt.savefig(f"box_plot_random_and_chosen.png", dpi=250)  # dpi is the resolution of each png
-plt.show()
+    plt.savefig(f"{output_path}.png", dpi=300)  # dpi is the resolution of each png
+
+    if show_plot is True:
+        plt.show()
+
+    plt.close()
