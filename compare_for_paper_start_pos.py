@@ -5,10 +5,33 @@ import matplotlib.ticker as ticker
 import matplotlib.font_manager as fm
 import numpy as np
 import textwrap
+from scipy import stats
 
 # dir_random_start = "data/3unequal_height_random_type6"
 # dir_chosen_start = "data/3unequal_height_chosen_type6"
 
+def calculate_statistics(values):
+    return {
+        "count (n-runs)": len(values),
+        "mean": np.mean(values),
+        "median": np.median(values),
+        "std_dev": np.std(values),
+        "min": np.min(values),
+        "max": np.max(values),
+        "Q1": np.percentile(values, 25),
+        "Q3": np.percentile(values, 75),
+        "IQR": np.percentile(values, 75) - np.percentile(values, 25)
+    }
+
+def perform_t_test(list1, list2):
+    # Perform Welch's t-test
+    t_stat, p_value = stats.ttest_ind(list1, list2, equal_var=False)
+
+    # Print the results
+    print(f"T-statistic: {t_stat}")
+    print(f"P-value: {p_value}")
+
+    return t_stat, p_value
 
 
 def get_z_mesh_from(dir):
@@ -105,6 +128,12 @@ def compare_random_chosen(dir_random_start, dir_chosen_start, output_path, show_
     list_mw_vor_start_time_chosen, list_mw_vor_end_time_chosen, list_number_iterations_chosen, number_of_runs_chosen = return_list_of_data(
         dir_chosen_start)
 
+    random_mean = np.mean(list_mw_vor_end_time_random)
+    chosen_mean = np.mean(list_mw_vor_end_time_chosen)
+    mean_decrease = ((random_mean - chosen_mean) / random_mean) * 100
+
+    t_stat, p_value = perform_t_test(list_mw_vor_end_time_random, list_mw_vor_end_time_chosen)
+
     # print(list_mw_vor_end_time_chosen)
     # print(list_mw_vor_end_time_random)
 
@@ -138,19 +167,42 @@ def compare_random_chosen(dir_random_start, dir_chosen_start, output_path, show_
     boxplot_data = [list_mw_vor_end_time_random, list_mw_vor_end_time_chosen]
     bp = ax.boxplot(boxplot_data, widths=box_width, medianprops={'linewidth': 3})
 
-    labels = [f'Random start positions, $n={number_of_runs_random}$',
-              f'Chosen start positions, $n={number_of_runs_chosen}$']
+    labels = [f'Random start positions, \n$n runs={number_of_runs_random}$',
+              f'Chosen start positions, \n$n runs={number_of_runs_chosen}$']
     ax.set_xticklabels(labels, fontproperties=font_prop_regular, fontsize=16)
 
-    ax.set_ylabel('Average response time\u00B2', fontproperties=font_prop_regular, fontsize=16)
+    ax.set_ylabel('Cost time\u00B2', fontproperties=font_prop_regular, fontsize=16)
 
     # title = 'Comparison of average response time²\nof final distribution'  # nog mee nemen hier tT met een streepje
     # wrapped_title = textwrap.fill(title, 37)  # Adjust the line width as needed
     # ax.set_title(wrapped_title, fontproperties=font_prop_bold, fontsize=20)
+    annotation = f'p = {p_value:.2e}'
+
+    annotation_text = f"{annotation}, cost mean \u2193: {mean_decrease:.1f}%"
+    ax.annotate(annotation_text,
+                xy=(0.95, 0.99),  # (x,y) coordinates where the annotation should be placed (relative to the axis)
+                xycoords='axes fraction',  # indicates that the coordinates are fractions of the axis (0-1)
+                fontsize=16,
+                fontproperties=font_prop_regular,
+                horizontalalignment='right',
+                verticalalignment='top',
+                bbox=dict(facecolor='white', edgecolor='black',
+                          boxstyle='square,pad=0.5'))  # the bbox argument allows you to add a box around the text
 
     plt.savefig(f"{output_path}.png", dpi=300)  # dpi is the resolution of each png
 
     if show_plot is True:
         plt.show()
+
+    output_data = {
+        "random_statistics": calculate_statistics(list_mw_vor_end_time_random),
+        "chosen_statistics": calculate_statistics(list_mw_vor_end_time_chosen),
+        "mean_decrease": mean_decrease,
+        "t_statistic": t_stat,
+        "p_value": p_value
+    }
+
+    with open(f"{output_path}_data.json", 'w') as f:
+        json.dump(output_data, f, indent=4)
 
     plt.close()

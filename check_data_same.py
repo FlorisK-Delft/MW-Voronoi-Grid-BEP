@@ -30,6 +30,7 @@ def generate_dir_name(chosen_or_random, fit_type):
 
 def plot_start_positions(json_file):
     try:
+        # print(json_file)
         with open(json_file, 'r') as f:
             data = json.load(f)
 

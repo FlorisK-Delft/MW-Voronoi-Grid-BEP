@@ -221,6 +221,18 @@ def distribute_robots_over_peaks(x_mesh, y_mesh, z_mesh, speed_list):
 
     return positions_robots_out, speed_robots_out
 
+def return_radius_center(z):
+    peaks = get_peaks(z)
+    radius_list = []
+    masses = []
+    for peak in peaks:
+        peak_z = z[peak[0], peak[1]]
+        radius, _, max_val, mass = get_highest_on_circle(z, peak, peak_z)
+        radius_list.append(radius)
+        masses.append(mass)
+    return radius_list, peaks.tolist(), masses
+
+
 # speed_robots_init = [4,4,4,3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 # print(distribute_robots_over_peaks(xx, yy, z, speed_robots_init))
 #

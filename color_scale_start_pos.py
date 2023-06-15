@@ -5,10 +5,13 @@ from matplotlib.patches import Circle
 import matplotlib.patches as mpatches
 import matplotlib.font_manager as fm
 import numpy as np
-from starting_positions_function import return_radius_center
+# from starting_positions_function import return_radius_center
+from starting_pos_func_v2_floris import return_radius_center
 
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.font_manager import FontProperties
+
+string_density = "Normalized probability density"
 
 # set the font
 font_path_regular = './lmroman7-regular.otf'
@@ -89,8 +92,10 @@ def plot_end_pos(root_dir, output_path, show_graph = False):
     # Create the font properties object with the specified font
     fontprops = fm.FontProperties(fname=font_path_regular, size=12)
 
-    plt.imshow(z_mesh, origin='lower', extent=(0, 10, 0, 10), alpha=0.25)
+    plt.imshow(z_mesh, origin='lower', extent=(0, 10, 0, 10), alpha=0.3)
     cbar = plt.colorbar(format=FormatStrFormatter('%.1e'))  # Use scientific notation with 2 decimal places
+
+    cbar.set_label(string_density, fontproperties=fontprops)
 
     # Set the font for the color bar labels
     for l in cbar.ax.yaxis.get_ticklabels():
@@ -126,6 +131,7 @@ def plot_end_pos(root_dir, output_path, show_graph = False):
 
 
         radius_list, peaks, masses = return_radius_center(z_mesh)
+
         for i, peak in enumerate(peaks):
             print(peak)
             print(radius_list[i])
@@ -149,3 +155,48 @@ def plot_end_pos(root_dir, output_path, show_graph = False):
     return None
 #
 # plot_end_pos("data/3unequal_height_random_type6")
+
+def plot_z_mesh(dir_json, output):
+    # Read global_mesh_data.json
+    with open(f'{dir_json}', 'r') as f:
+        data = json.load(f)
+
+    # Get mesh data
+    z_mesh_list = data['z_mesh']
+    x_mesh_list = data['x_mesh']
+    y_mesh_list = data['y_mesh']
+
+    # Convert to numpy arrays
+    z_mesh = np.array(z_mesh_list)
+    x_mesh = np.array(x_mesh_list)
+    y_mesh = np.array(y_mesh_list)
+
+    # Get x and y bounds
+    x_min, x_max = np.min(x_mesh), np.max(x_mesh)
+    y_min, y_max = np.min(y_mesh), np.max(y_mesh)
+
+    # Create a new figure
+    plt.figure()
+
+    # Plot z_mesh data
+    plt.imshow(z_mesh, origin='lower', extent=(x_min, x_max, y_min, y_max), alpha=0.5)
+
+    # Add a colorbar
+    cbar = plt.colorbar(format=FormatStrFormatter('%.1e'))  # Use scientific notation with 2 decimal places
+
+    # Create the font properties object with the specified font
+    fontprops = fm.FontProperties(fname=font_path_regular, size=12)
+
+    # Set the label for the colorbar
+    cbar.set_label(string_density, fontproperties=fontprops)
+
+    # Set the font for the color bar labels
+    for l in cbar.ax.yaxis.get_ticklabels():
+        l.set_fontproperties(fontprops)
+
+    # Save the figure
+    plt.savefig(f"{output}.png", dpi=300)  # dpi is the resolution of the output image
+
+    # Close the figure to free memory
+    plt.close()
+
