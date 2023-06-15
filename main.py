@@ -400,13 +400,13 @@ for test in range(150):
     # type 6
     # type 7
 
-    type_pdf = 8  # see list of what types in probability density function file
+    type_pdf = 6  # see list of what types in probability density function file
 
     number_of_robots = 12
     # speed_robots = [5, 5, 4, 4, 3, 2, 1]
     speed_robots_init = [3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1]
 
-    random_start_pos = 2
+    random_start_pos = 1
 
     if random_start_pos == 1:
         x_random = np.random.uniform(plane.x_min, plane.x_max, number_of_robots)
