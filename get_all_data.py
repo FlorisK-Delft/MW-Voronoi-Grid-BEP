@@ -5,7 +5,7 @@ import glob
 
 from check_data_same import check_data_path
 from sort_runs import sort_runs
-from compare_for_paper_start_pos import compare_random_chosen
+from compare_for_paper_start_pos import compare_random_chosen, r_and_c_to_latex
 from color_scale_start_pos import plot_end_pos, plot_z_mesh
 from functions_for_lloyds import get_lloyds_data_from_type, generating_loyds_table
 
@@ -202,20 +202,20 @@ for type_pdf in type_pdf_to_evaluate:
 
 # ------------------------------------------------------------------------
 # random vs chosen comparison
-print("\n\nStarting random vs chosen comparison\n")
-r_vs_c_dir = f'{base_dir}/random_vs_chosen'
-if os.path.exists(r_vs_c_dir):
-    shutil.rmtree(r_vs_c_dir)
-os.makedirs(r_vs_c_dir)
-
-for type_pdf in type_pdf_to_evaluate:
-    dir_chosen_list = list_dir_names(type_pdf, chosen=True, random=False)
-    dir_random_list = list_dir_names(type_pdf, chosen=False, random=True)
-    if dir_chosen_list and dir_random_list:
-        dir_chosen = dir_chosen_list[0]
-        dir_random = dir_random_list[0]
-        if os.path.exists(dir_chosen) and os.path.exists(dir_random):
-            pass
+# print("\n\nStarting random vs chosen comparison\n")
+# r_vs_c_dir = f'{base_dir}/random_vs_chosen'
+# if os.path.exists(r_vs_c_dir):
+#     shutil.rmtree(r_vs_c_dir)
+# os.makedirs(r_vs_c_dir)
+#
+# for type_pdf in type_pdf_to_evaluate:
+#     dir_chosen_list = list_dir_names(type_pdf, chosen=True, random=False)
+#     dir_random_list = list_dir_names(type_pdf, chosen=False, random=True)
+#     if dir_chosen_list and dir_random_list:
+#         dir_chosen = dir_chosen_list[0]
+#         dir_random = dir_random_list[0]
+#         if os.path.exists(dir_chosen) and os.path.exists(dir_random):
+#             pass
 
 # ------------------------------------------------------------------------
 # generating latex data
@@ -228,4 +228,5 @@ os.makedirs(latex_dir)
 generating_loyds_table(lloyds_dir, latex_dir)
 generating_loyds_table(lloyds_dir, latex_dir, compact=True)
 
-
+r_and_c_to_latex(box_plots_dir, latex_dir)
+r_and_c_to_latex(box_plots_dir, latex_dir, compact=True)

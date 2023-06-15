@@ -169,7 +169,8 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         D = A
         # E = C
         # F = "n-runs"
-        G = "\\makecell[b]{SVMR\\\\improvement}"
+        G = "\\makecell[b]{NSMR\\\\improvement}"
+        H = "p-value"
         output_txt = f'{output_dir}/table_lloyds_compact.txt'
     else:
         A = "\\makecell[b]{cost \\\\ $time^{2}$}"
@@ -179,7 +180,8 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         D = A
         E = C
         F = "n-runs"
-        G = "\\makecell[b]{SVMR \\\\ vs Lloyds}"
+        G = "\\makecell[b]{NSMR \\\\ vs Lloyds}"
+        H = "p-value"
         output_txt = f'{output_dir}/table_lloyds.txt'
 
     # Open the output text file in write mode
@@ -188,17 +190,17 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         outfile.write("\\begin{table}[h]\n")
         outfile.write("\\centering\n")
         if compact:
-            outfile.write("\\begin{NiceTabular}{ccccc}\n")
+            outfile.write("\\begin{NiceTabular}{cccccc}\n")
             outfile.write("\\toprule\n")
-            outfile.write("& \\multicolumn{1}{c}{\\textbf{Start pos}} & \\multicolumn{1}{c}{\\textbf{Lloyd's pos}} & \\multicolumn{1}{c}{\\textbf{SVMR}} & \\multicolumn{1}{c}{\\textbf{Result}}\\\\\n")
-            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-3} \\cmidrule(lr){4-4} \\cmidrule(lr){5-5}\n")
-            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{B}}} & {{{D}}} & {{{G}}} \\\\\n")
+            outfile.write("& \\multicolumn{1}{c}{\\textbf{Start pos}} & \\multicolumn{1}{c}{\\textbf{Lloyd's pos}} & \\multicolumn{1}{c}{\\textbf{NSMR}} & \\multicolumn{2}{c}{\\textbf{Result}}\\\\\n")
+            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-3} \\cmidrule(lr){4-4} \\cmidrule(lr){5-6}\n")
+            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{B}}} & {{{D}}} & {{{G}}} & {{{H}}} \\\\\n")
         else:
-            outfile.write("\\begin{NiceTabular}{cccccccc}\n")
+            outfile.write("\\begin{NiceTabular}{ccccccccc}\n")
             outfile.write("\\toprule\n")
-            outfile.write("& \\multicolumn{1}{c}{\\textbf{Start pos}} & \\multicolumn{2}{c}{\\textbf{Lloyd's pos}} & \\multicolumn{2}{c}{\\textbf{SVMR}} & \\multicolumn{2}{c}{\\textbf{Result}}\\\\\n")
-            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-4} \\cmidrule(lr){5-6} \\cmidrule(lr){7-8}\n")
-            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{B}}} & {{{C}}} & {{{D}}} & {{{E}}} & {{{F}}} & {{{G}}} \\\\\n")
+            outfile.write("& \\multicolumn{1}{c}{\\textbf{Start pos}} & \\multicolumn{2}{c}{\\textbf{Lloyd's pos}} & \\multicolumn{2}{c}{\\textbf{NSMR}} & \\multicolumn{3}{c}{\\textbf{Result}}\\\\\n")
+            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-4} \\cmidrule(lr){5-6} \\cmidrule(lr){7-9}\n")
+            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{B}}} & {{{C}}} & {{{D}}} & {{{E}}} & {{{F}}} & {{{G}}} & {{{H}}} \\\\\n")
         outfile.write("\\midrule\n")
 
         # Iterate over every row
@@ -220,12 +222,13 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
             E_value = "{:.1f}".format(round(data["reduction_svmr_compared_to_start"], 1)) + '\%'
             F_value = int(data["number_of_lloyds_runs"])
             G_value = "{:.1f}".format(round(data["svmr_decrease_percentage_compared_to_lloyds"], 1)) + '\%'
+            H_value = "{:.2e}".format(data["p_value"])
 
             # Writing the row data
             if compact:
-                outfile.write(f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {D_value} & {G_value} \\\\\n")
+                outfile.write(f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {D_value} & {G_value} & {H_value} \\\\\n")
             else:
-                outfile.write(f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {C_value} & {D_value} & {E_value} & {F_value} & {G_value} \\\\\n")
+                outfile.write(f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {C_value} & {D_value} & {E_value} & {F_value} & {G_value} & {H_value} \\\\\n")
 
         # Writing the end of the table
         outfile.write("\\bottomrule\n")
@@ -237,16 +240,16 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
 
 
 
-base_dir = "data"
-print("\n\nStart exporting data to latex\n")
-latex_dir = f'{base_dir}/latex_text'
-if os.path.exists(latex_dir):
-    shutil.rmtree(latex_dir)
-os.makedirs(latex_dir)
-
-lloyds_dir = f'{base_dir}/lloyds_comparison'
-
-generating_loyds_table(lloyds_dir, latex_dir)
-
-generating_loyds_table(lloyds_dir, latex_dir, compact=True)
+# base_dir = "data"
+# print("\n\nStart exporting data to latex\n")
+# latex_dir = f'{base_dir}/latex_text'
+# if os.path.exists(latex_dir):
+#     shutil.rmtree(latex_dir)
+# os.makedirs(latex_dir)
+#
+# lloyds_dir = f'{base_dir}/lloyds_comparison'
+#
+# generating_loyds_table(lloyds_dir, latex_dir)
+#
+# generating_loyds_table(lloyds_dir, latex_dir, compact=True)
 

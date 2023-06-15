@@ -6,6 +6,21 @@ import matplotlib.font_manager as fm
 import numpy as np
 import textwrap
 from scipy import stats
+import shutil
+
+prefix_dict_2 = {
+    1: '2 eclipse',
+    2: 'Unimodal',
+    3: 'Bimodal\\\\equal',
+    4: 'Trimodal\\\\equal',
+    5: 'Bimodal\\\\unequal height',
+    6: 'Trimodal\\\\unequal height',
+    7: 'Trimodal\\\\unequal sigma',
+    8: 'Bimodal\\\\unequal sigma',
+    9: '4-modal equal',
+    10: '4-modal unequal height',
+    11: '4-modal unequal sigma'
+}
 
 # dir_random_start = "data/3unequal_height_random_type6"
 # dir_chosen_start = "data/3unequal_height_chosen_type6"
@@ -206,3 +221,110 @@ def compare_random_chosen(dir_random_start, dir_chosen_start, output_path, show_
         json.dump(output_data, f, indent=4)
 
     plt.close()
+
+def r_and_c_to_latex(dir_files, output_dir, compact=False):
+    sort_order = [2, 3, 5, 8, 4, 6, 7]
+
+    # Process each JSON file in the directory
+    json_files = [f for f in os.listdir(dir_files) if
+                  f.endswith('.json') and f != 'global_mesh_data.json' and f != 'result_time_reduction.json']
+
+    # Sort the files according to the list
+    json_files = sorted(json_files, key=lambda f: sort_order.index(int(f.split('_')[3].split('.')[0])) if int(
+        f.split('_')[3].split('.')[0]) in sort_order else len(sort_order), reverse=False)
+
+    # Create variable strings
+    if compact:
+        A = "Mean"
+        B = "Median"
+        C = "\\makecell[b]{Standard\\\\deviation}"
+        D = "n runs"
+        E = A
+        F = B
+        G = C
+        H = D
+        I = "Mean $\downarrow$"
+        J = "Median $\downarrow$"
+        K = "p value"
+        output_txt = f'{output_dir}/table_r_c_compact.txt'
+    else:
+        A = "Mean"
+        B = "Median"
+        C = "\\makecell[b]{Standard\\\\deviation}"
+        D = "n runs"
+        E = A
+        F = B
+        G = C
+        H = D
+        I = "Mean $\downarrow$"
+        J = "Median $\downarrow$"
+        K = "p value"
+        output_txt = f'{output_dir}/table_r_c_compact.txt'
+        output_txt = f'{output_dir}/table_r_c.txt'
+
+    # Open the output text file in write mode
+    with open(output_txt, 'w') as outfile:
+        # Write the table preamble
+        outfile.write("\\begin{table}[h]\n")
+        outfile.write("\\centering\n")
+        if compact:
+            outfile.write("\\begin{NiceTabular}{cccc}\n")
+            outfile.write("\\toprule\n")
+            outfile.write("& \\multicolumn{1}{c}{\\textbf{Random}} & \\multicolumn{1}{c}{\\textbf{Chosen}} & \\multicolumn{1}{c}{\\textbf{Result}}\\\\\n")
+            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-3} \\cmidrule(lr){4-4}\n")
+            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{E}}} & {{{I}}} \\\\\n")
+        else:
+            outfile.write("\\begin{NiceTabular}{cccccccccccc}\n")
+            outfile.write("\\toprule\n")
+            outfile.write("& \\multicolumn{4}{c}{\\textbf{Random start positions}} & \\multicolumn{4}{c}{\\textbf{Chosen start positions}} & \\multicolumn{3}{c}{\\textbf{Result}}\\\\\n")
+            outfile.write("\\cmidrule(lr){2-5} \\cmidrule(lr){6-9} \\cmidrule(lr){10-12}\n")
+            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{B}}} & {{{C}}} & {{{D}}} & {{{E}}} & {{{F}}} & {{{G}}} & {{{H}}} & {{{I}}} & {{{J}}} & {{{K}}} \\\\\n")
+        outfile.write("\\midrule\n")
+
+        # Iterate over every row
+        for i, json_file in enumerate(json_files):
+            json_file_dir = f'{dir_files}/{json_file}'
+            with open(json_file_dir, 'r') as f:
+                data = json.load(f)
+
+            type_of_pdf = int(json_file.split('_')[3].split('.')[0])
+            row_name = prefix_dict_2[type_of_pdf]
+
+            A_value = "{:.3f}".format(data['random_statistics']['mean'])
+            B_value = "{:.3f}".format(data['random_statistics']['median'])
+            C_value = "{:.2e}".format(data['random_statistics']['std_dev'])
+            D_value = int(data['random_statistics']['count (n-runs)'])
+            E_value = "{:.3f}".format(data['chosen_statistics']['mean'])
+            F_value = "{:.3f}".format(data['chosen_statistics']['median'])
+            G_value = "{:.2e}".format(data['chosen_statistics']['std_dev'])
+            H_value = int(data['chosen_statistics']['count (n-runs)'])
+            I_value = "{:.1f}".format(data['mean_decrease']) + '\%'
+            J_value = "{:.1f}".format(((data['random_statistics']['median'] - data['chosen_statistics']['median']) /
+                                        data['random_statistics']['median']) * 100) + '\%'
+            K_value = "{:.2e}".format(data['p_value'])
+
+            if compact:
+                outfile.write(
+                    f"\\makecell*{{{row_name}}} & {A_value} & {E_value} & {I_value} \\\\\n")
+            else:
+                outfile.write(
+                    f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {C_value} & {D_value} & {E_value} & {F_value} & {G_value} & {H_value} & {I_value} & {J_value} & {K_value} \\\\\n")
+
+        # Writing the end of the table
+        outfile.write("\\bottomrule\n")
+        outfile.write("\\end{NiceTabular}\n")
+        outfile.write("\\end{table}\n")
+
+        del outfile
+
+# base_dir = "data"
+# print("\n\nStart exporting data to latex\n")
+# latex_dir = f'{base_dir}/latex_text'
+# if not os.path.exists(latex_dir):
+#     os.makedirs(latex_dir)
+#
+# box_plots_dir = f'{base_dir}/box_plots'
+#
+# r_and_c_to_latex(box_plots_dir, latex_dir)
+#
+# r_and_c_to_latex(box_plots_dir, latex_dir, compact=True)
