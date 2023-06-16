@@ -19,6 +19,11 @@ prefix_dict = {
     11: '4-modal unequal sigma'
 }
 
+def remove_first_zero(string):
+    if string.startswith('0.'):
+        return string[1:]
+    else:
+        return string
 
 def get_lloyds_data_from_type(dir_files, output):
     number_of_lloyds_runs = 0
@@ -170,7 +175,7 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         # E = C
         # F = "n-runs"
         G = "\\makecell[b]{NSMR\\\\improvement}"
-        H = "p-value"
+        H = "\\textit{p} value"
         output_txt = f'{output_dir}/table_lloyds_compact.txt'
     else:
         A = "\\makecell[b]{cost \\\\ $time^{2}$}"
@@ -181,15 +186,17 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         E = C
         F = "n-runs"
         G = "\\makecell[b]{NSMR \\\\ vs Lloyds}"
-        H = "p-value"
+        H = "\\textit{p}-value"
         output_txt = f'{output_dir}/table_lloyds.txt'
 
     # Open the output text file in write mode
     with open(output_txt, 'w') as outfile:
         # Write the table preamble
         outfile.write("\\begin{table}[h]\n")
+        outfile.write("\\caption{Lloyd's performance compared to NSMR's performance}\n")
         outfile.write("\\centering\n")
         if compact:
+            outfile.write("\\begin{adjustbox}{width=\\columnwidth,center}\n")
             outfile.write("\\begin{NiceTabular}{cccccc}\n")
             outfile.write("\\toprule\n")
             outfile.write("& \\multicolumn{1}{c}{\\textbf{Start pos}} & \\multicolumn{1}{c}{\\textbf{Lloyd's pos}} & \\multicolumn{1}{c}{\\textbf{NSMR}} & \\multicolumn{2}{c}{\\textbf{Result}}\\\\\n")
@@ -215,10 +222,16 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
             type_of_pdf = int(json_file.split('_')[3].split('.')[0])
             row_name = prefix_dict[type_of_pdf]
 
-            A_value = "{:.3f}".format(round(data["average_svmr_start_time"], 3))
-            B_value = "{:.3f}".format(round(data["average_lloyds_end_time"], 3))
+            def remove_first_zero(string):
+                if string.startswith('0.'):
+                    return string[1:]
+                else:
+                    return string
+
+            A_value = ("{:.3f}".format(round(data["average_svmr_start_time"], 3)))
+            B_value = ("{:.3f}".format(round(data["average_lloyds_end_time"], 3)))
             C_value = "{:.1f}".format(round(data["reduction_lloyds_compared_to_start"], 1)) + '\%'
-            D_value = "{:.3f}".format(round(data["average_svmr_end_time"], 3))
+            D_value = ("{:.3f}".format(round(data["average_svmr_end_time"], 3)))
             E_value = "{:.1f}".format(round(data["reduction_svmr_compared_to_start"], 1)) + '\%'
             F_value = int(data["number_of_lloyds_runs"])
             G_value = "{:.1f}".format(round(data["svmr_decrease_percentage_compared_to_lloyds"], 1)) + '\%'
@@ -233,6 +246,8 @@ def generating_loyds_table(dir_files, output_dir, compact=False):
         # Writing the end of the table
         outfile.write("\\bottomrule\n")
         outfile.write("\\end{NiceTabular}\n")
+        if compact:
+            outfile.write("\\end{adjustbox}\n")
         outfile.write("\\end{table}\n")
 
         del outfile

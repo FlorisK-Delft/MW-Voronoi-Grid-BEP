@@ -22,6 +22,12 @@ prefix_dict_2 = {
     11: '4-modal unequal sigma'
 }
 
+def remove_first_zero(string):
+    if string.startswith('0.'):
+        return string[1:]
+    else:
+        return string
+
 # dir_random_start = "data/3unequal_height_random_type6"
 # dir_chosen_start = "data/3unequal_height_chosen_type6"
 
@@ -245,7 +251,7 @@ def r_and_c_to_latex(dir_files, output_dir, compact=False):
         H = D
         I = "Mean $\downarrow$"
         J = "Median $\downarrow$"
-        K = "p value"
+        K = "\\textit{p} value"
         output_txt = f'{output_dir}/table_r_c_compact.txt'
     else:
         A = "Mean"
@@ -258,7 +264,7 @@ def r_and_c_to_latex(dir_files, output_dir, compact=False):
         H = D
         I = "Mean $\downarrow$"
         J = "Median $\downarrow$"
-        K = "p value"
+        K = "\\textit{p} value"
         output_txt = f'{output_dir}/table_r_c_compact.txt'
         output_txt = f'{output_dir}/table_r_c.txt'
 
@@ -268,11 +274,11 @@ def r_and_c_to_latex(dir_files, output_dir, compact=False):
         outfile.write("\\begin{table}[h]\n")
         outfile.write("\\centering\n")
         if compact:
-            outfile.write("\\begin{NiceTabular}{cccc}\n")
+            outfile.write("\\begin{NiceTabular}{ccccc}\n")
             outfile.write("\\toprule\n")
-            outfile.write("& \\multicolumn{1}{c}{\\textbf{Random}} & \\multicolumn{1}{c}{\\textbf{Chosen}} & \\multicolumn{1}{c}{\\textbf{Result}}\\\\\n")
-            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-3} \\cmidrule(lr){4-4}\n")
-            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{E}}} & {{{I}}} \\\\\n")
+            outfile.write("& \\multicolumn{1}{c}{\\textbf{Random}} & \\multicolumn{1}{c}{\\textbf{Chosen}} & \\multicolumn{2}{c}{\\textbf{Result}}\\\\\n")
+            outfile.write("\\cmidrule(lr){2-2} \\cmidrule(lr){3-3} \\cmidrule(lr){4-5}\n")
+            outfile.write(f"\\textbf{{PDF Type}} & {{{A}}} & {{{E}}} & {{{I}}} & {{{K}}} \\\\\n")
         else:
             outfile.write("\\begin{NiceTabular}{cccccccccccc}\n")
             outfile.write("\\toprule\n")
@@ -290,12 +296,12 @@ def r_and_c_to_latex(dir_files, output_dir, compact=False):
             type_of_pdf = int(json_file.split('_')[3].split('.')[0])
             row_name = prefix_dict_2[type_of_pdf]
 
-            A_value = "{:.3f}".format(data['random_statistics']['mean'])
-            B_value = "{:.3f}".format(data['random_statistics']['median'])
+            A_value = ("{:.3f}".format(data['random_statistics']['mean']))
+            B_value = ("{:.3f}".format(data['random_statistics']['median']))
             C_value = "{:.2e}".format(data['random_statistics']['std_dev'])
             D_value = int(data['random_statistics']['count (n-runs)'])
-            E_value = "{:.3f}".format(data['chosen_statistics']['mean'])
-            F_value = "{:.3f}".format(data['chosen_statistics']['median'])
+            E_value = ("{:.3f}".format(data['chosen_statistics']['mean']))
+            F_value = ("{:.3f}".format(data['chosen_statistics']['median']))
             G_value = "{:.2e}".format(data['chosen_statistics']['std_dev'])
             H_value = int(data['chosen_statistics']['count (n-runs)'])
             I_value = "{:.1f}".format(data['mean_decrease']) + '\%'
@@ -305,7 +311,7 @@ def r_and_c_to_latex(dir_files, output_dir, compact=False):
 
             if compact:
                 outfile.write(
-                    f"\\makecell*{{{row_name}}} & {A_value} & {E_value} & {I_value} \\\\\n")
+                    f"\\makecell*{{{row_name}}} & {A_value} & {E_value} & {I_value} & {K_value} \\\\\n")
             else:
                 outfile.write(
                     f"\\makecell*{{{row_name}}} & {A_value} & {B_value} & {C_value} & {D_value} & {E_value} & {F_value} & {G_value} & {H_value} & {I_value} & {J_value} & {K_value} \\\\\n")
